@@ -59,9 +59,10 @@ function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
     .forEach((order) => {
       order.producto_ids.forEach((productId) => {
         const product = products.find((item) => item.producto_id === productId);
+        const orderItem = order.items?.find((item) => item.producto_id === productId);
         const current = productStats.get(productId) ?? {
           productId,
-          title: product?.titulo ?? productId,
+          title: product?.titulo ?? orderItem?.titulo ?? `Producto ${productId.slice(0, 8)}`,
           units: 0,
           revenue: 0
         };
@@ -69,7 +70,7 @@ function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
         productStats.set(productId, {
           ...current,
           units: current.units + 1,
-          revenue: current.revenue + (product?.precio ?? 0)
+          revenue: current.revenue + (product?.precio ?? orderItem?.precio_unitario ?? 0)
         });
       });
     });
@@ -94,7 +95,9 @@ function percent(part: number, total: number) {
 function buildOrderFunnel(orders: Order[]) {
   const paidOrders = orders.filter((order) => order.estado_pago === "aprobado");
   const shippedOrders = orders.filter((order) => order.estado_envio === "despachado" || order.estado_envio === "entregado");
-  const completedOrders = orders.filter((order) => order.estado_general === "finalizada");
+  const completedOrders = orders.filter(
+    (order) => order.estado_general === "finalizada" || order.estado_general === "liquidada"
+  );
 
   return [
     {
@@ -212,7 +215,9 @@ export async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
   const payments = paymentsResult.payments;
   const approvedPayments = payments.filter((payment) => payment.estado === "aprobado");
   const pendingPayments = payments.filter((payment) => payment.estado === "pendiente");
-  const completedOrders = orders.filter((order) => order.estado_general === "finalizada");
+  const completedOrders = orders.filter(
+    (order) => order.estado_general === "finalizada" || order.estado_general === "liquidada"
+  );
   const activeUsers = new Set(orders.map((order) => order.comprador_id));
   const averageRating = reviews.length > 0 ? sum(reviews.map((review) => review.calificacion)) / reviews.length : 0;
   const orderStatusCounts = countBy(orders.map((order) => order.estado_general));

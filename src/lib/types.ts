@@ -4,6 +4,7 @@ export type OrderStatus =
   | "en_preparacion"
   | "despachada"
   | "finalizada"
+  | "liquidada"
   | "cancelada";
 
 export type PaymentStatus = "pendiente" | "aprobado" | "rechazado";
@@ -28,6 +29,11 @@ export type Order = {
   orden_id: string;
   comprador_id: string;
   vendedor_id: string;
+  items?: Array<{
+    producto_id: string;
+    precio_unitario: number;
+    titulo?: string;
+  }>;
   producto_ids: string[];
   total: number;
   estado_general: OrderStatus;

@@ -103,6 +103,29 @@ function normalizeProductIds(order: Record<string, unknown>) {
   return [];
 }
 
+function normalizeOrderItems(order: Record<string, unknown>) {
+  if (!Array.isArray(order.items)) {
+    return [];
+  }
+
+  return order.items
+    .map((item) => {
+      const orderItem = asRecord(item);
+      const productId = asString(orderItem?.producto_id);
+
+      if (!orderItem || !productId) {
+        return null;
+      }
+
+      return {
+        producto_id: productId,
+        precio_unitario: asNumber(orderItem.precio_unitario),
+        titulo: asString(orderItem.titulo)
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+}
+
 function normalizeOrder(value: unknown): Order | null {
   const order = asRecord(value);
 
@@ -120,6 +143,7 @@ function normalizeOrder(value: unknown): Order | null {
     orden_id: ordenId,
     comprador_id: asString(order.comprador_id),
     vendedor_id: asString(order.vendedor_id),
+    items: normalizeOrderItems(order),
     producto_ids: normalizeProductIds(order),
     total: asNumber(order.total),
     estado_general: asString(order.estado_general, "pendiente_pago") as Order["estado_general"],
