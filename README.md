@@ -1,10 +1,99 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/l2PpCgMp)
-# analytics-dashboard
+# Analytics Dashboard
 
-Aplicación **Analytics Dashboard** del [Proyecto IAW 2026](https://iaw-2026.github.io/proyecto/) — comisión `<!-- completar -->`.
+Aplicacion **Analytics Dashboard** del Proyecto IAW 2026.
 
-Herramienta de reportes consolidados (Etapa 3): métricas del sistema completo consultando las APIs de cada webapp individual.
+Herramienta de lectura y analisis que consolida metricas del sistema LAMA completo. Esta primera version ya define la estructura de dashboard y trabaja con datos mock, preparada para reemplazar esas fuentes por APIs protegidas con Clerk.
 
----
+## Funcionalidades incluidas
 
-Enunciado completo: <https://iaw-2026.github.io/proyecto/>
+- Indicadores clave del negocio:
+  - ingresos aprobados
+  - transacciones aprobadas
+  - usuarios activos
+  - pedidos completados
+  - calificacion promedio
+  - productos activos
+- Visualizaciones de ingresos por mes, estado de ordenes y estado de envios.
+- Tablas de productos destacados y ordenes recientes.
+- Embudo operativo de ordenes creadas, pagadas, enviadas y finalizadas.
+- Alertas operativas accionables para pagos pendientes/rechazados y ordenes pagadas sin envio, con links al recurso afectado.
+- Indicador de salud de integraciones segun fuentes conectadas, mockeadas o con error.
+- API interna `GET /api/analytics/summary` para centralizar la consolidacion de datos.
+- Panel de fuentes de datos que indica que integraciones siguen en modo mock.
+- Integracion inicial con `GET /api/productos` y `GET /api/ordenes-ventas` de Seller App, con fallback a mock si la API responde error.
+- Integracion inicial con `GET /api/envios` de Shipping App, con fallback a mock si la API responde error.
+- Integracion inicial con `GET /api/pagos` de Payments App, con fallback a mock si la API responde error.
+
+## Stack
+
+- Next.js
+- React
+- TypeScript
+- Clerk
+- CSS propio
+
+## Ejecutar localmente
+
+```bash
+npm install
+npm run dev
+```
+
+La aplicacion queda disponible en:
+
+```text
+http://localhost:3000
+```
+
+Para validar produccion:
+
+```bash
+npm run build
+```
+
+## Webapps a integrar
+
+URLs conocidas:
+
+```text
+Seller App:   https://proyecto-c-seller-lama.vercel.app
+Shipping App: https://proyecto-c-shipping-lama.vercel.app
+Buyer App:    https://proyecto-c-buyer2-lama.vercel.app
+Payments App: https://proyecto-c-payments-lama.vercel.app
+```
+
+Como las APIs usan seguridad con Clerk, el dashboard no deberia consumir endpoints protegidos directamente desde el navegador. La estrategia recomendada es consultar desde rutas internas de Next, usando credenciales de servidor o endpoints especificos de analytics.
+
+Variables de entorno esperadas:
+
+```text
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+
+SELLER_API_BASE_URL=https://proyecto-c-seller-lama.vercel.app
+SELLER_API_KEY=
+SELLER_API_KEY_HEADER=x-api-key
+BUYER_API_KEY=
+SHIPPING_API_KEY=
+SHIPPING_API_KEY_HEADER=x-api-key
+PAYMENTS_API_KEY=
+PAYMENTS_API_KEY_HEADER=x-api-key
+CONTROL_PLANE_API_KEY=
+ANALYTICS_API_KEY=
+```
+
+Si `GET /api/productos` o `GET /api/ordenes-ventas` responden `401`, revisar en Seller que la key de Analytics este habilitada para esos endpoints y que el header configurado coincida con el esperado por la API.
+
+## Proximo paso tecnico
+
+Reemplazar los mocks restantes de `src/lib/mock-data.ts` por clientes de API en una capa de servicios, manteniendo `src/lib/analytics.ts` como punto de consolidacion.
+
+Endpoints utiles a confirmar o crear:
+
+- `GET /api/analytics/usuarios-activos`
+
+Si esos endpoints no existen, se pueden usar endpoints internos equivalentes siempre que el dashboard tenga una forma segura de autenticarse.
