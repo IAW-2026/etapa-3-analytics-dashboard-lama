@@ -15,16 +15,21 @@ function getPaymentsUrl() {
 function getApiHeaders() {
   const apiKey = process.env.PAYMENTS_API_KEY ?? process.env.ANALYTICS_API_KEY;
   const headerName = process.env.PAYMENTS_API_KEY_HEADER ?? "x-api-key";
+  const serviceName = process.env.ANALYTICS_SERVICE_NAME ?? "analytics";
+  const serviceHeaderName = process.env.ANALYTICS_SERVICE_NAME_HEADER ?? "x-service-name";
+  const headers: Record<string, string> = {
+    [serviceHeaderName]: serviceName
+  };
 
   if (!apiKey) {
-    return {};
+    return headers;
   }
 
   if (headerName.toLowerCase() === "authorization") {
-    return { Authorization: `Bearer ${apiKey}` };
+    return { ...headers, Authorization: `Bearer ${apiKey}` };
   }
 
-  return { [headerName]: apiKey };
+  return { ...headers, [headerName]: apiKey };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

@@ -21,6 +21,7 @@ Herramienta de lectura y analisis que consolida metricas del sistema LAMA comple
 - API interna `GET /api/analytics/summary` para centralizar la consolidacion de datos.
 - Panel de fuentes de datos que indica que integraciones siguen en modo mock.
 - Integracion inicial con `GET /api/productos` y `GET /api/ordenes-ventas` de Seller App, con fallback a mock si la API responde error.
+- Integracion inicial con `GET /api/compradores` de Buyer App, con preferencias incluidas en cada comprador y fallback a mock si la API responde error. Los filtros `search`, `estado`, `page` y `pageSize` son opcionales.
 - Integracion inicial con `GET /api/envios` de Shipping App, con fallback a mock si la API responde error.
 - Integracion inicial con `GET /api/pagos` de Payments App, con fallback a mock si la API responde error.
 
@@ -64,6 +65,8 @@ Payments App: https://proyecto-c-payments-lama.vercel.app
 
 Como las APIs usan seguridad con Clerk, el dashboard no deberia consumir endpoints protegidos directamente desde el navegador. La estrategia recomendada es consultar desde rutas internas de Next, usando credenciales de servidor o endpoints especificos de analytics.
 
+Las llamadas entre servicios se autentican con `x-api-key` y se identifican con `x-service-name`.
+
 Variables de entorno esperadas:
 
 ```text
@@ -75,9 +78,17 @@ NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
 NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
 
 SELLER_API_BASE_URL=https://proyecto-c-seller-lama.vercel.app
+ANALYTICS_SERVICE_NAME=analytics
+ANALYTICS_SERVICE_NAME_HEADER=x-service-name
 SELLER_API_KEY=
 SELLER_API_KEY_HEADER=x-api-key
 BUYER_API_KEY=
+BUYER_API_KEY_HEADER=x-api-key
+BUYER_CUSTOMERS_PATH=/api/compradores
+BUYER_SEARCH=
+BUYER_STATUS=
+BUYER_PAGE=
+BUYER_PAGE_SIZE=
 SHIPPING_API_KEY=
 SHIPPING_API_KEY_HEADER=x-api-key
 PAYMENTS_API_KEY=
@@ -90,10 +101,4 @@ Si `GET /api/productos` o `GET /api/ordenes-ventas` responden `401`, revisar en 
 
 ## Proximo paso tecnico
 
-Reemplazar los mocks restantes de `lib/mock-data.ts` por clientes de API en una capa de servicios, manteniendo `lib/analytics.ts` como punto de consolidacion.
-
-Endpoints utiles a confirmar o crear:
-
-- `GET /api/analytics/usuarios-activos`
-
-Si esos endpoints no existen, se pueden usar endpoints internos equivalentes siempre que el dashboard tenga una forma segura de autenticarse.
+Si Analytics necesita rankings globales de preferencias y usa filtros o paginado en Buyer, pedir un endpoint agregado a Buyer. Las preferencias incluidas en `GET /api/compradores` corresponden a la respuesta solicitada.

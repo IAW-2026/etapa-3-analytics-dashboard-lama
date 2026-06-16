@@ -1,4 +1,91 @@
-import type { Order, Payment, Product, Review, Shipment } from "./types";
+import type { Buyer, BuyerPreference, Order, Payment, Product, Review, Shipment } from "./types";
+
+export const buyers: Buyer[] = [
+  {
+    clerk_user_id_comprador: "buyer_01",
+    email: "buyer01@lama.test",
+    nombre_comprador: "Comprador Uno",
+    DNI: "30111222",
+    telefono: "1123456789",
+    direccion_envio: "Av. Siempre Viva 742",
+    fecha_creacion: "2026-01-10",
+    fecha_actualizacion: "2026-05-25"
+  },
+  {
+    clerk_user_id_comprador: "buyer_02",
+    email: "buyer02@lama.test",
+    nombre_comprador: "Comprador Dos",
+    DNI: "30222333",
+    telefono: "1134567890",
+    direccion_envio: "Calle Lima 120",
+    fecha_creacion: "2026-02-02",
+    fecha_actualizacion: "2026-02-07"
+  },
+  {
+    clerk_user_id_comprador: "buyer_03",
+    email: "buyer03@lama.test",
+    nombre_comprador: "Comprador Tres",
+    DNI: "30333444",
+    telefono: "1145678901",
+    direccion_envio: "Pasaje Norte 55",
+    fecha_creacion: "2026-03-01",
+    fecha_actualizacion: "2026-03-18"
+  },
+  {
+    clerk_user_id_comprador: "buyer_04",
+    email: "buyer04@lama.test",
+    nombre_comprador: "Comprador Cuatro",
+    DNI: "30444555",
+    telefono: "1156789012",
+    direccion_envio: "San Martin 980",
+    fecha_creacion: "2026-04-28",
+    fecha_actualizacion: "2026-05-27"
+  },
+  {
+    clerk_user_id_comprador: "buyer_05",
+    email: "buyer05@lama.test",
+    nombre_comprador: "Comprador Cinco",
+    DNI: "30555666",
+    telefono: "1167890123",
+    direccion_envio: "Rivadavia 1500",
+    fecha_creacion: "2026-05-12",
+    fecha_actualizacion: "2026-06-02"
+  },
+  {
+    clerk_user_id_comprador: "buyer_06",
+    email: "buyer06@lama.test",
+    nombre_comprador: "Comprador Seis",
+    DNI: "30666777",
+    telefono: "1178901234",
+    direccion_envio: "Belgrano 350",
+    fecha_creacion: "2026-06-04",
+    fecha_actualizacion: "2026-06-09"
+  }
+];
+
+export const buyerPreferences: BuyerPreference[] = [
+  {
+    preferencia_id: "pref_001",
+    clerk_user_id_comprador: "buyer_01",
+    talles_preferidos: ["M", "U"],
+    categorias_preferidas: ["cat_abrigos", "cat_bolsos"],
+    vendedores_preferidos: ["seller_01", "seller_04"]
+  },
+  {
+    preferencia_id: "pref_002",
+    clerk_user_id_comprador: "buyer_02",
+    talles_preferidos: ["40"],
+    categorias_preferidas: ["cat_calzado"],
+    vendedores_preferidos: ["seller_02"]
+  },
+  {
+    preferencia_id: "pref_003",
+    clerk_user_id_comprador: "buyer_03",
+    talles_preferidos: ["S", "42"],
+    categorias_preferidas: ["cat_camisas", "cat_pantalones"],
+    vendedores_preferidos: ["seller_03"]
+  }
+];
 
 export const products: Product[] = [
   {

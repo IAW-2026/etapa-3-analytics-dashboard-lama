@@ -1,14 +1,17 @@
+import { fetchBuyerCustomers } from "./api/buyer";
 import { fetchPayments } from "./api/payments";
 import { fetchSellerOrders, fetchSellerProducts } from "./api/seller";
 import { fetchShippingShipments } from "./api/shipping";
 import {
+  buyerPreferences as mockBuyerPreferences,
+  buyers as mockBuyers,
   orders as mockOrders,
   payments as mockPayments,
   products as mockProducts,
   reviews,
   shipments as mockShipments
 } from "./mock-data";
-import type { AnalyticsSnapshot, Order, Payment, Shipment } from "./types";
+import type { AnalyticsSnapshot, BuyerPreference, Order, Payment, Shipment } from "./types";
 
 const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "short" });
 
@@ -82,6 +85,18 @@ function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
 
   return Array.from(productStats.values())
     .sort((first, second) => second.revenue - first.revenue)
+    .slice(0, 5);
+}
+
+function buildPreferenceCounts(
+  preferences: BuyerPreference[],
+  getValues: (preference: BuyerPreference) => string[]
+) {
+  const counts = countBy(preferences.flatMap(getValues).filter(Boolean));
+
+  return Object.entries(counts)
+    .map(([label, value]) => ({ label, value }))
+    .sort((first, second) => second.value - first.value)
     .slice(0, 5);
 }
 
@@ -206,9 +221,10 @@ function buildOperationalAlerts(orders: Order[], payments: Payment[], shipments:
 }
 
 export async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
-  const [sellerProducts, sellerOrders] = await Promise.all([
+  const [sellerProducts, sellerOrders, buyerCustomers] = await Promise.all([
     fetchSellerProducts(mockProducts),
-    fetchSellerOrders(mockOrders)
+    fetchSellerOrders(mockOrders),
+    fetchBuyerCustomers(mockBuyers, mockBuyerPreferences)
   ]);
   const [shippingShipments, paymentsResult] = await Promise.all([
     fetchShippingShipments(mockShipments),
@@ -216,6 +232,7 @@ export async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
   ]);
   const products = sellerProducts.products;
   const orders = sellerOrders.orders;
+  const buyerPreferences = buyerCustomers.preferences;
   const shipments = shippingShipments.shipments;
   const payments = paymentsResult.payments;
   const approvedPayments = payments.filter((payment) => payment.estado === "aprobado");
@@ -223,7 +240,7 @@ export async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
   const completedOrders = orders.filter(
     (order) => order.estado_general === "finalizada" || order.estado_general === "liquidada"
   );
-  const activeUsers = new Set(orders.map((order) => order.comprador_id));
+  const activeUsers = buyerCustomers.totalBuyers;
   const averageRating = reviews.length > 0 ? sum(reviews.map((review) => review.calificacion)) / reviews.length : 0;
   const orderStatusCounts = countBy(orders.map((order) => order.estado_general));
   const paymentStatusCounts = countBy(payments.map((payment) => payment.estado));
@@ -231,11 +248,7 @@ export async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
   const dataSources = [
     sellerProducts.source,
     sellerOrders.source,
-    {
-      name: "Buyer App",
-      status: "mock" as const,
-      detail: "Mock temporal para ordenes hasta contar con sesion/token de servicio."
-    },
+    buyerCustomers.source,
     {
       ...shippingShipments.source
     },
@@ -247,7 +260,7 @@ export async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
     generatedAt: new Date().toISOString(),
     kpis: {
       totalTransactions: approvedPayments.length,
-      activeUsers: activeUsers.size,
+      activeUsers,
       completedOrders: completedOrders.length,
       revenue: sum(approvedPayments.map((payment) => payment.monto_total)),
       averageRating,
@@ -262,6 +275,12 @@ export async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
     ordersByStatus: Object.entries(orderStatusCounts).map(([label, value]) => ({ label, value })),
     paymentsByStatus: Object.entries(paymentStatusCounts).map(([label, value]) => ({ label, value })),
     shipmentsByStatus: Object.entries(shipmentStatusCounts).map(([label, value]) => ({ label, value })),
+    buyerPreferencesByCategory: buildPreferenceCounts(
+      buyerPreferences,
+      (preference) => preference.categorias_preferidas
+    ),
+    buyerPreferencesBySize: buildPreferenceCounts(buyerPreferences, (preference) => preference.talles_preferidos),
+    buyerPreferencesBySeller: buildPreferenceCounts(buyerPreferences, (preference) => preference.vendedores_preferidos),
     orderFunnel: buildOrderFunnel(orders),
     operationalAlerts: buildOperationalAlerts(orders, payments, shipments),
     topProducts: buildTopProducts(products, orders),

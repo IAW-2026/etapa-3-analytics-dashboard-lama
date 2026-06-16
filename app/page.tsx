@@ -165,7 +165,7 @@ export default async function Home() {
         <KpiCard
           label="Usuarios activos"
           value={numberFormatter.format(snapshot.kpis.activeUsers)}
-          detail="Compradores con actividad reciente"
+          detail="Compradores registrados en Buyer"
         />
         <KpiCard
           label="Pedidos completados"

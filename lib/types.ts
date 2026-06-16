@@ -11,6 +11,26 @@ export type PaymentStatus = "pendiente" | "aprobado" | "rechazado";
 
 export type ShipmentStatus = "pending" | "in_transit" | "delivered";
 
+export type Buyer = {
+  clerk_user_id_comprador: string;
+  email: string;
+  nombre_comprador: string;
+  DNI: string;
+  telefono?: string;
+  direccion_envio: string;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
+  preferencias?: BuyerPreference[];
+};
+
+export type BuyerPreference = {
+  preferencia_id: string;
+  clerk_user_id_comprador: string;
+  talles_preferidos: string[];
+  categorias_preferidas: string[];
+  vendedores_preferidos: string[];
+};
+
 export type Product = {
   producto_id: string;
   vendedor_id: string;
@@ -90,6 +110,9 @@ export type AnalyticsSnapshot = {
   ordersByStatus: Array<{ label: string; value: number }>;
   paymentsByStatus: Array<{ label: string; value: number }>;
   shipmentsByStatus: Array<{ label: string; value: number }>;
+  buyerPreferencesByCategory: Array<{ label: string; value: number }>;
+  buyerPreferencesBySize: Array<{ label: string; value: number }>;
+  buyerPreferencesBySeller: Array<{ label: string; value: number }>;
   orderFunnel: Array<{ label: string; value: number; detail: string }>;
   operationalAlerts: Array<{
     id: string;
