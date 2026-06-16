@@ -27,7 +27,12 @@ function countBy<T extends string>(items: T[]) {
 }
 
 function getMonthLabel(date: string) {
-  const parsedDate = new Date(`${date}T00:00:00`);
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "sin fecha";
+  }
+
   return monthFormatter.format(parsedDate).replace(".", "");
 }
 
