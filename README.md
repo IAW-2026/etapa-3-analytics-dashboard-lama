@@ -90,7 +90,7 @@ Si `GET /api/productos` o `GET /api/ordenes-ventas` responden `401`, revisar en 
 
 ## Proximo paso tecnico
 
-Reemplazar los mocks restantes de `src/lib/mock-data.ts` por clientes de API en una capa de servicios, manteniendo `src/lib/analytics.ts` como punto de consolidacion.
+Reemplazar los mocks restantes de `lib/mock-data.ts` por clientes de API en una capa de servicios, manteniendo `lib/analytics.ts` como punto de consolidacion.
 
 Endpoints utiles a confirmar o crear:
 
