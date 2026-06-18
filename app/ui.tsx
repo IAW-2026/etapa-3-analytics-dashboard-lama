@@ -457,6 +457,71 @@ export function BarChart({
   );
 }
 
+type TemporalMetricKey =
+  | "buyers"
+  | "completedOrders"
+  | "deliveredShipments"
+  | "orders"
+  | "payments"
+  | "revenue"
+  | "shipments";
+
+function formatTemporalValue(value: number, format: "currency" | "number") {
+  return format === "currency" ? formatCurrency(value) : numberFormatter.format(value);
+}
+
+export function TemporalChart({
+  data,
+  emptyText = "No hay datos para el periodo seleccionado.",
+  format = "number",
+  label,
+  valueKey,
+  valueLabel
+}: {
+  data: AnalyticsSnapshot["temporalSeries"];
+  emptyText?: string;
+  format?: "currency" | "number";
+  label: string;
+  valueKey: TemporalMetricKey;
+  valueLabel: string;
+}) {
+  const maxValue = Math.max(...data.map((item) => Number(item[valueKey])), 0);
+
+  if (data.length === 0 || maxValue === 0) {
+    return (
+      <div className="chart-empty" aria-label={label}>
+        <span>Sin evolucion</span>
+        <strong>{emptyText}</strong>
+      </div>
+    );
+  }
+
+  return (
+    <div className="temporal-chart" aria-label={label}>
+      <div className="temporal-plot">
+        {data.map((item) => {
+          const value = Number(item[valueKey]);
+          const height = Math.max((value / maxValue) * 100, 8);
+
+          return (
+            <div className="temporal-point" key={`${item.date}-${item.label}`}>
+              <span className="temporal-value">{formatTemporalValue(value, format)}</span>
+              <div className="temporal-track">
+                <div style={{ height: `${height}%` }} />
+              </div>
+              <small>{item.label}</small>
+            </div>
+          );
+        })}
+      </div>
+      <div className="temporal-caption">
+        <span>{valueLabel}</span>
+        <strong>{formatTemporalValue(data.reduce((total, item) => total + Number(item[valueKey]), 0), format)}</strong>
+      </div>
+    </div>
+  );
+}
+
 export function HorizontalBars({
   data,
   valueLabel

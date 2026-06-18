@@ -2,17 +2,16 @@ import { getAnalyticsSnapshot } from "@/lib/analytics";
 import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
 import {
   AppChrome,
-  BarChart,
   DetailCard,
   formatCurrency,
   Funnel,
   getMetric,
-  HorizontalBars,
   Icon,
   KpiCard,
   numberFormatter,
   OperationalAlertsPanel,
   SystemFlowPanel,
+  TemporalChart,
   TopProductsPanel,
   TopSellersPanel
 } from "../ui";
@@ -97,13 +96,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               <p className="eyebrow">Ingresos</p>
               <h2>
                 <Icon name="trending" />
-                Ingresos por mes
+                Evolucion de ingresos
               </h2>
               <span className="panel-subtitle">Pagos aprobados consolidados</span>
             </div>
             <strong className="panel-total">{formatCurrency(snapshot.kpis.revenue)} aprobados</strong>
           </div>
-          <BarChart data={snapshot.revenueByMonth} valueKey="revenue" label="Ingresos por mes" />
+          <TemporalChart
+            data={snapshot.temporalSeries}
+            emptyText="No hay ingresos aprobados en el periodo seleccionado."
+            format="currency"
+            label="Evolucion de ingresos"
+            valueKey="revenue"
+            valueLabel="Ingresos aprobados"
+          />
         </article>
 
         <article className="panel">
@@ -112,11 +118,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               <p className="eyebrow">Ordenes</p>
               <h2>
                 <Icon name="bag" />
-                Estado de ordenes
+                Evolucion de ordenes
               </h2>
             </div>
           </div>
-          <HorizontalBars data={snapshot.orderFunnel.map(({ label, value }) => ({ label, value }))} valueLabel="ordenes" />
+          <TemporalChart
+            data={snapshot.temporalSeries}
+            emptyText="No hay ordenes creadas en el periodo seleccionado."
+            label="Evolucion de ordenes"
+            valueKey="orders"
+            valueLabel="Ordenes creadas"
+          />
         </article>
       </section>
 

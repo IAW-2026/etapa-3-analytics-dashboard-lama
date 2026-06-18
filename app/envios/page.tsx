@@ -1,6 +1,6 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
 import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
-import { AppChrome, HorizontalBars, MetricPanel, numberFormatter } from "../ui";
+import { AppChrome, MetricPanel, numberFormatter, TemporalChart } from "../ui";
 
 type PageProps = {
   searchParams?: Promise<TimeRangeSearchParams>;
@@ -45,11 +45,17 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Estados</p>
-            <h2>Estado de envios</h2>
+            <p className="eyebrow">Evolucion</p>
+            <h2>Envios registrados</h2>
           </div>
         </div>
-        <HorizontalBars data={snapshot.shipmentsByStatus} valueLabel="envios" />
+        <TemporalChart
+          data={snapshot.temporalSeries}
+          emptyText="No hay envios registrados en el periodo seleccionado."
+          label="Evolucion de envios"
+          valueKey="shipments"
+          valueLabel="Envios registrados"
+        />
       </section>
     </AppChrome>
   );

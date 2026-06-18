@@ -26,6 +26,7 @@ import type {
 } from "./types";
 
 const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "short" });
+const dayMonthFormatter = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "short" });
 const dayInMilliseconds = 24 * 60 * 60 * 1000;
 const orderDelayDays = 5;
 const shipmentDelayDays = 3;
@@ -276,6 +277,110 @@ function getDaysSince(value: string, now: Date) {
   }
 
   return Math.max(0, Math.floor((now.getTime() - date.getTime()) / dayInMilliseconds));
+}
+
+function getTemporalBucket(value: string, timeRange: AnalyticsTimeRange) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  if (timeRange.id === "all" || timeRange.id === "90d") {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+    return {
+      key,
+      date: `${key}-01`,
+      label: monthFormatter.format(date).replace(".", "")
+    };
+  }
+
+  const key = date.toISOString().slice(0, 10);
+
+  return {
+    key,
+    date: key,
+    label: dayMonthFormatter.format(date).replace(".", "")
+  };
+}
+
+function buildTemporalSeries({
+  buyers,
+  orders,
+  payments,
+  shipments,
+  timeRange
+}: {
+  buyers: Buyer[];
+  orders: Order[];
+  payments: Payment[];
+  shipments: Shipment[];
+  timeRange: AnalyticsTimeRange;
+}): AnalyticsSnapshot["temporalSeries"] {
+  const buckets = new Map<string, AnalyticsSnapshot["temporalSeries"][number]>();
+  const ensureBucket = (value: string) => {
+    const bucket = getTemporalBucket(value, timeRange);
+
+    if (!bucket) {
+      return null;
+    }
+
+    const current = buckets.get(bucket.key) ?? {
+      label: bucket.label,
+      date: bucket.date,
+      buyers: 0,
+      orders: 0,
+      completedOrders: 0,
+      payments: 0,
+      revenue: 0,
+      shipments: 0,
+      deliveredShipments: 0
+    };
+
+    buckets.set(bucket.key, current);
+
+    return current;
+  };
+
+  buyers.forEach((buyer) => {
+    const bucket = ensureBucket(buyer.fecha_creacion);
+
+    if (bucket) {
+      bucket.buyers += 1;
+    }
+  });
+
+  orders.forEach((order) => {
+    const bucket = ensureBucket(order.fecha_creacion);
+
+    if (bucket) {
+      bucket.orders += 1;
+      bucket.completedOrders += isCompletedOrder(order) ? 1 : 0;
+    }
+  });
+
+  payments
+    .filter((payment) => payment.estado === "aprobado")
+    .forEach((payment) => {
+      const bucket = ensureBucket(payment.fecha_creacion);
+
+      if (bucket) {
+        bucket.payments += 1;
+        bucket.revenue += payment.monto_total;
+      }
+    });
+
+  shipments.forEach((shipment) => {
+    const bucket = ensureBucket(shipment.fecha_actualizacion);
+
+    if (bucket) {
+      bucket.shipments += 1;
+      bucket.deliveredShipments += shipment.estado === "delivered" ? 1 : 0;
+    }
+  });
+
+  return Array.from(buckets.values()).sort((first, second) => first.date.localeCompare(second.date));
 }
 
 function getPercentChange(current: number, previous: number) {
@@ -701,6 +806,13 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
     },
     trends,
     revenueByMonth: buildRevenueByMonth(filteredPayments),
+    temporalSeries: buildTemporalSeries({
+      buyers: filteredBuyers,
+      orders: filteredOrders,
+      payments: filteredPayments,
+      shipments: filteredShipments,
+      timeRange
+    }),
     ordersByStatus: Object.entries(orderStatusCounts).map(([label, value]) => ({ label, value })),
     paymentsByStatus: Object.entries(paymentStatusCounts).map(([label, value]) => ({ label, value })),
     shipmentsByStatus: Object.entries(shipmentStatusCounts).map(([label, value]) => ({ label, value })),

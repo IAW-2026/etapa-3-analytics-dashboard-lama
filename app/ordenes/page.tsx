@@ -1,6 +1,6 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
 import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
-import { AppChrome, formatCurrency, Funnel, HorizontalBars, MetricPanel, numberFormatter, StatusPill } from "../ui";
+import { AppChrome, formatCurrency, Funnel, MetricPanel, numberFormatter, StatusPill, TemporalChart } from "../ui";
 
 type PageProps = {
   searchParams?: Promise<TimeRangeSearchParams>;
@@ -48,11 +48,17 @@ export default async function OrdersPage({ searchParams }: PageProps) {
         <article className="panel">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Estados</p>
-              <h2>Estado de ordenes</h2>
+              <p className="eyebrow">Evolucion</p>
+              <h2>Ordenes creadas</h2>
             </div>
           </div>
-          <HorizontalBars data={snapshot.ordersByStatus} valueLabel="ordenes" />
+          <TemporalChart
+            data={snapshot.temporalSeries}
+            emptyText="No hay ordenes creadas en el periodo seleccionado."
+            label="Evolucion de ordenes"
+            valueKey="orders"
+            valueLabel="Ordenes creadas"
+          />
         </article>
 
         <article className="panel">

@@ -151,6 +151,17 @@ export type AnalyticsSnapshot = {
     shipmentsByStatus: Record<string, TrendMetric>;
   };
   revenueByMonth: Array<{ label: string; revenue: number; orders: number }>;
+  temporalSeries: Array<{
+    label: string;
+    date: string;
+    buyers: number;
+    orders: number;
+    completedOrders: number;
+    payments: number;
+    revenue: number;
+    shipments: number;
+    deliveredShipments: number;
+  }>;
   ordersByStatus: Array<{ label: string; value: number }>;
   paymentsByStatus: Array<{ label: string; value: number }>;
   shipmentsByStatus: Array<{ label: string; value: number }>;

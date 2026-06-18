@@ -1,6 +1,6 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
 import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
-import { AppChrome, HorizontalBars, MetricPanel, numberFormatter } from "../ui";
+import { AppChrome, MetricPanel, numberFormatter, TemporalChart } from "../ui";
 
 type PageProps = {
   searchParams?: Promise<TimeRangeSearchParams>;
@@ -48,20 +48,32 @@ export default async function UsersPage({ searchParams }: PageProps) {
         <article className="panel">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Preferencias</p>
-              <h2>Categorias</h2>
+              <p className="eyebrow">Evolucion</p>
+              <h2>Altas de compradores</h2>
             </div>
           </div>
-          <HorizontalBars data={snapshot.buyerPreferencesByCategory} valueLabel="preferencias" />
+          <TemporalChart
+            data={snapshot.temporalSeries}
+            emptyText="No hay compradores nuevos en el periodo seleccionado."
+            label="Evolucion de compradores"
+            valueKey="buyers"
+            valueLabel="Compradores nuevos"
+          />
         </article>
         <article className="panel">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Preferencias</p>
-              <h2>Talles</h2>
+              <p className="eyebrow">Operacion</p>
+              <h2>Ordenes de compradores</h2>
             </div>
           </div>
-          <HorizontalBars data={snapshot.buyerPreferencesBySize} valueLabel="preferencias" />
+          <TemporalChart
+            data={snapshot.temporalSeries}
+            emptyText="No hay ordenes de compradores en el periodo seleccionado."
+            label="Evolucion de ordenes de compradores"
+            valueKey="orders"
+            valueLabel="Ordenes creadas"
+          />
         </article>
       </section>
     </AppChrome>
