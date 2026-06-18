@@ -104,6 +104,30 @@ function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
     .slice(0, 5);
 }
 
+function buildTopSellers(orders: Order[]) {
+  const sellerStats = new Map<string, { sellerId: string; sales: number; revenue: number }>();
+
+  orders
+    .filter((order) => order.estado_pago === "aprobado")
+    .forEach((order) => {
+      const current = sellerStats.get(order.vendedor_id) ?? {
+        sellerId: order.vendedor_id,
+        sales: 0,
+        revenue: 0
+      };
+
+      sellerStats.set(order.vendedor_id, {
+        ...current,
+        sales: current.sales + 1,
+        revenue: current.revenue + order.total
+      });
+    });
+
+  return Array.from(sellerStats.values())
+    .sort((first, second) => second.revenue - first.revenue || second.sales - first.sales)
+    .slice(0, 5);
+}
+
 function buildPreferenceCounts(
   preferences: BuyerPreference[],
   getValues: (preference: BuyerPreference) => string[]
@@ -504,6 +528,7 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
     orderFunnel: buildOrderFunnel(filteredOrders),
     operationalAlerts: buildOperationalAlerts(filteredOrders, filteredPayments, filteredShipments),
     topProducts: buildTopProducts(products, filteredOrders),
+    topSellers: buildTopSellers(filteredOrders),
     recentOrders: [...filteredOrders].sort(sortRecentOrders).slice(0, 6),
     dataSources
   };

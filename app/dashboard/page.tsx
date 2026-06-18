@@ -11,7 +11,8 @@ import {
   Icon,
   KpiCard,
   numberFormatter,
-  TopProductsPanel
+  TopProductsPanel,
+  TopSellersPanel
 } from "../ui";
 
 type PageProps = {
@@ -117,7 +118,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </article>
       </section>
 
-      <TopProductsPanel products={snapshot.topProducts} />
+      <section className="ranking-grid" aria-label="Rankings comerciales">
+        <TopProductsPanel products={snapshot.topProducts} />
+        <TopSellersPanel sellers={snapshot.topSellers} />
+      </section>
 
       <section className="panel">
         <div className="panel-heading">
