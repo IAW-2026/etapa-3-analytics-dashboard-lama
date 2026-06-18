@@ -895,12 +895,21 @@ span.trend-neutral {
 }
 
 .dashboard-grid,
+.ranking-grid,
 .detail-grid,
 .table-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
   gap: 20px;
   align-items: stretch;
+}
+
+.ranking-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ranking-grid > .panel {
+  height: 100%;
 }
 
 .detail-grid {
@@ -938,6 +947,12 @@ span.trend-neutral {
   font-size: 0.86rem;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.panel-heading .panel-subtitle {
+  display: block;
+  margin-top: 8px;
+  white-space: normal;
 }
 
 :root[data-theme="dark"] .panel-heading span,
@@ -1410,6 +1425,7 @@ tr:last-child td {
 
   .home-hero,
   .dashboard-grid,
+  .ranking-grid,
   .detail-grid,
   .table-grid,
   .ai-summary-heading,

@@ -561,7 +561,7 @@ export function TopProductsPanel({
             <Icon name="package" />
             {title}
           </h2>
-          <span>{detail}</span>
+          <span className="panel-subtitle">{detail}</span>
         </div>
       </div>
 
@@ -585,6 +585,55 @@ export function TopProductsPanel({
         </div>
       ) : (
         <p className="empty-state">Sin productos vendidos en el periodo seleccionado.</p>
+      )}
+    </section>
+  );
+}
+
+export function TopSellersPanel({
+  detail = "Ordenados por ingresos y ventas aprobadas",
+  sellers,
+  title = "Top vendedores"
+}: {
+  detail?: string;
+  sellers: Array<{ sellerId: string; sales: number; revenue: number }>;
+  title?: string;
+}) {
+  const maxRevenue = Math.max(...sellers.map((seller) => seller.revenue), 1);
+
+  return (
+    <section className="panel">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Vendedores</p>
+          <h2>
+            <Icon name="users" />
+            {title}
+          </h2>
+          <span className="panel-subtitle">{detail}</span>
+        </div>
+      </div>
+
+      {sellers.length > 0 ? (
+        <div className="ranked-list">
+          {sellers.map((seller, index) => (
+            <article className="ranked-row" key={seller.sellerId}>
+              <span className="ranked-index">{String(index + 1).padStart(2, "0")}</span>
+              <div className="ranked-main">
+                <div className="ranked-copy">
+                  <strong>{formatLabel(seller.sellerId)}</strong>
+                  <span>{numberFormatter.format(seller.sales)} ventas aprobadas</span>
+                </div>
+                <div className="ranked-track">
+                  <div style={{ width: `${Math.max((seller.revenue / maxRevenue) * 100, 8)}%` }} />
+                </div>
+              </div>
+              <strong className="ranked-value">{formatCurrency(seller.revenue)}</strong>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-state">Sin ventas de vendedores en el periodo seleccionado.</p>
       )}
     </section>
   );

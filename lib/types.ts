@@ -172,6 +172,7 @@ export type AnalyticsSnapshot = {
     }>;
   }>;
   topProducts: Array<{ productId: string; title: string; units: number; revenue: number }>;
+  topSellers: Array<{ sellerId: string; sales: number; revenue: number }>;
   recentOrders: Order[];
   dataSources: Array<{ name: string; status: "mock" | "connected" | "error"; detail: string }>;
 };
