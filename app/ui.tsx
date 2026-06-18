@@ -317,7 +317,7 @@ export function AppChrome({
           <strong>LAMA</strong>
           <span>Analytics</span>
         </div>
-        <div className="topbar-center">Analytics</div>
+        <div ></div>
         <div className="topbar-actions">
           <TimeRangeSelector activeRange={timeRangeId} />
           <ThemeToggle />

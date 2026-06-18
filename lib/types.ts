@@ -9,7 +9,7 @@ export type OrderStatus =
 
 export type PaymentStatus = "pendiente" | "aprobado" | "rechazado";
 
-export type ShipmentStatus = "pending" | "in_transit" | "delivered";
+export type ShipmentStatus = "pending" | "in_transit" | "delivered" | "cancelled";
 
 export type Buyer = {
   clerk_user_id_comprador: string;
