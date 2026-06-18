@@ -37,6 +37,7 @@ export type Product = {
   categoria_id: string;
   titulo: string;
   precio: number;
+  stock?: number;
   estado_prenda: "nuevo" | "usado" | "vintage";
   talle: string;
   marca: string;
@@ -156,7 +157,27 @@ export type AnalyticsSnapshot = {
   buyerPreferencesByCategory: Array<{ label: string; value: number }>;
   buyerPreferencesBySize: Array<{ label: string; value: number }>;
   buyerPreferencesBySeller: Array<{ label: string; value: number }>;
-  orderFunnel: Array<{ label: string; value: number; detail: string }>;
+  systemFlow: Array<{
+    id: "buyer" | "seller" | "payments" | "shipping";
+    label: string;
+    value: number;
+    valueLabel: string;
+    detail: string;
+    conversionToNext: number | null;
+    conversionLabel: string | null;
+    metrics: Array<{
+      label: string;
+      value: number;
+      format: "currency" | "number" | "percent";
+    }>;
+  }>;
+  orderFunnel: Array<{
+    label: string;
+    value: number;
+    detail: string;
+    conversionFromPrevious: number | null;
+    conversionLabel: string;
+  }>;
   operationalAlerts: Array<{
     id: string;
     title: string;
@@ -166,7 +187,7 @@ export type AnalyticsSnapshot = {
       id: string;
       label: string;
       href: string;
-      type: "pago" | "orden" | "envio";
+      type: "envio" | "orden" | "pago" | "producto";
     }>;
   }>;
   topProducts: Array<{ productId: string; title: string; units: number; revenue: number }>;

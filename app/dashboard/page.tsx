@@ -11,6 +11,8 @@ import {
   Icon,
   KpiCard,
   numberFormatter,
+  OperationalAlertsPanel,
+  SystemFlowPanel,
   TopProductsPanel,
   TopSellersPanel
 } from "../ui";
@@ -47,7 +49,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       integrationHealth={snapshot.kpis.integrationHealth}
       timeRangeId={snapshot.timeRange.id}
     >
-      <section className="page-hero">
+      <section className="page-hero compact">
         <p className="eyebrow">Sistema LAMA</p>
         <h1>Dashboard operativo</h1>
         <p>Resumen visual de ordenes, usuarios, ingresos, productos, pagos, envios y calificaciones.</p>
@@ -97,7 +99,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 <Icon name="trending" />
                 Ingresos por mes
               </h2>
-              <span>Pagos aprobados consolidados</span>
+              <span className="panel-subtitle">Pagos aprobados consolidados</span>
             </div>
             <strong className="panel-total">{formatCurrency(snapshot.kpis.revenue)} aprobados</strong>
           </div>
@@ -118,6 +120,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </article>
       </section>
 
+      <SystemFlowPanel flow={snapshot.systemFlow} />
+
       <section className="ranking-grid" aria-label="Rankings comerciales">
         <TopProductsPanel products={snapshot.topProducts} />
         <TopSellersPanel sellers={snapshot.topSellers} />
@@ -133,6 +137,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </div>
         <Funnel data={snapshot.orderFunnel} />
       </section>
+
+      <OperationalAlertsPanel alerts={snapshot.operationalAlerts} />
 
       <section className="detail-grid" aria-label="Detalle operativo">
         <DetailCard badge="Pagos" icon="credit" rows={paymentRows} title="Pagos" />

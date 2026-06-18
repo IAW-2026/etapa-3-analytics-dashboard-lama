@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { buildTimeRangeHref } from "@/lib/time-range";
-import type { TimeRangeId, TrendMetric } from "@/lib/types";
+import type { AnalyticsSnapshot, TimeRangeId, TrendMetric } from "@/lib/types";
 
 import { ThemeToggle } from "./theme-toggle";
 import { TimeRangeSelector } from "./time-range-selector";
@@ -415,13 +415,23 @@ export function BarChart({
   label: string;
   valueKey: string;
 }) {
+  if (data.length === 0) {
+    return (
+      <div className="chart-empty" aria-label={label}>
+        <span>Sin datos</span>
+        <strong>No hay ingresos aprobados en el periodo seleccionado.</strong>
+      </div>
+    );
+  }
+
   const maxValue = Math.max(...data.map((item) => Number(item[valueKey])), 1);
+  const isCompact = data.length <= 2;
 
   return (
-    <div className="chart" aria-label={label}>
+    <div className={`chart ${isCompact ? "chart-compact" : ""}`} aria-label={label}>
       {data.map((item) => {
         const value = Number(item[valueKey]);
-        const height = Math.max((value / maxValue) * 100, 12);
+        const height = isCompact ? Math.max((value / maxValue) * 72, 28) : Math.max((value / maxValue) * 100, 12);
 
         return (
           <div className="bar-column" key={String(item.label)}>
@@ -469,9 +479,15 @@ export function HorizontalBars({
 export function Funnel({
   data
 }: {
-  data: Array<{ label: string; value: number; detail: string }>;
+  data: Array<{
+    label: string;
+    value: number;
+    detail: string;
+    conversionFromPrevious: number | null;
+    conversionLabel: string;
+  }>;
 }) {
-  const icons: IconName[] = ["bag", "credit", "truck", "check"];
+  const icons: IconName[] = ["bag", "credit", "truck", "package", "check"];
   const maxValue = Math.max(...data.map((item) => item.value), 1);
 
   return (
@@ -483,7 +499,11 @@ export function Funnel({
             <Icon name={icons[index] ?? "activity"} />
           </div>
           <strong>{item.label}</strong>
-          <p>{index === 0 ? `${numberFormatter.format(item.value)} ordenes` : item.detail}</p>
+          <p>{numberFormatter.format(item.value)} ordenes</p>
+          <span className="funnel-conversion">
+            {item.conversionFromPrevious === null ? "Base" : `${item.conversionFromPrevious}%`}
+            <small>{item.conversionLabel}</small>
+          </span>
           <div className="funnel-meter">
             <div style={{ width: `${Math.max((item.value / maxValue) * 100, 8)}%` }} />
           </div>
@@ -581,6 +601,34 @@ export function TopProductsPanel({
   );
 }
 
+type OperationalAlert = AnalyticsSnapshot["operationalAlerts"][number];
+type SystemFlowNode = AnalyticsSnapshot["systemFlow"][number];
+
+const alertSeverityLabels: Record<OperationalAlert["severity"], string> = {
+  critical: "Critico",
+  info: "Info",
+  warning: "Atencion"
+};
+
+const flowIcons: Record<SystemFlowNode["id"], IconName> = {
+  buyer: "users",
+  payments: "credit",
+  seller: "package",
+  shipping: "truck"
+};
+
+function formatFlowMetric(metric: SystemFlowNode["metrics"][number]) {
+  if (metric.format === "currency") {
+    return formatCurrency(metric.value);
+  }
+
+  if (metric.format === "percent") {
+    return `${numberFormatter.format(metric.value)}%`;
+  }
+
+  return numberFormatter.format(metric.value);
+}
+
 export function TopSellersPanel({
   detail = "Ordenados por ingresos y ventas aprobadas",
   sellers,
@@ -626,6 +674,99 @@ export function TopSellersPanel({
       ) : (
         <p className="empty-state">Sin ventas de vendedores en el periodo seleccionado.</p>
       )}
+    </section>
+  );
+}
+
+export function SystemFlowPanel({ flow }: { flow: SystemFlowNode[] }) {
+  return (
+    <section className="panel system-flow-panel">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Ecosistema</p>
+          <h2>
+            <Icon name="activity" />
+            Flujo operativo
+          </h2>
+          <span className="panel-subtitle">Buyer, Seller, Payments y Shipping consolidados</span>
+        </div>
+      </div>
+
+      <div className="system-flow">
+        {flow.map((node) => (
+          <article className="flow-node" key={node.id}>
+            <div className="flow-node-heading">
+              <span className="flow-icon">
+                <Icon name={flowIcons[node.id]} />
+              </span>
+              <span>{node.label}</span>
+            </div>
+            <strong>
+              {numberFormatter.format(node.value)}
+              <small>{node.valueLabel}</small>
+            </strong>
+            <p>{node.detail}</p>
+            <div className="flow-node-metrics">
+              {node.metrics.map((metric) => (
+                <div key={metric.label}>
+                  <span>{metric.label}</span>
+                  <strong>{formatFlowMetric(metric)}</strong>
+                </div>
+              ))}
+            </div>
+            {node.conversionToNext !== null && node.conversionLabel ? (
+              <div className="flow-connector">
+                <strong>{node.conversionToNext}%</strong>
+                <span>{node.conversionLabel}</span>
+              </div>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function OperationalAlertsPanel({ alerts }: { alerts: OperationalAlert[] }) {
+  const totalEvents = alerts.reduce((total, alert) => total + alert.items.length, 0);
+
+  return (
+    <section className="panel operational-alerts-panel">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Riesgo operativo</p>
+          <h2>
+            <Icon name="activity" />
+            Alertas operativas
+          </h2>
+          <span className="panel-subtitle">Ordenes, pagos, envios y stock</span>
+        </div>
+        <strong className="panel-total">{numberFormatter.format(totalEvents)} eventos</strong>
+      </div>
+
+      <div className="alert-list operational">
+        {alerts.map((alert) => (
+          <article className={`alert-card alert-${alert.severity}`} key={alert.id}>
+            <div className="alert-heading">
+              <span>{alertSeverityLabels[alert.severity]}</span>
+              <strong>{alert.items.length > 0 ? numberFormatter.format(alert.items.length) : "OK"}</strong>
+            </div>
+            <strong>{alert.title}</strong>
+            <p>{alert.detail}</p>
+            {alert.items.length > 0 ? (
+              <div className="alert-items">
+                {alert.items.slice(0, 3).map((item) => (
+                  <a href={item.href} key={item.id} rel="noreferrer" target="_blank">
+                    <span>{formatLabel(item.type)}</span>
+                    <strong>{item.label}</strong>
+                  </a>
+                ))}
+                {alert.items.length > 3 ? <span>+{numberFormatter.format(alert.items.length - 3)} mas</span> : null}
+              </div>
+            ) : null}
+          </article>
+        ))}
+      </div>
     </section>
   );
 }

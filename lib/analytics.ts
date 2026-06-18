@@ -26,6 +26,9 @@ import type {
 } from "./types";
 
 const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "short" });
+const dayInMilliseconds = 24 * 60 * 60 * 1000;
+const orderDelayDays = 5;
+const shipmentDelayDays = 3;
 
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
@@ -211,6 +214,24 @@ function isCompletedOrder(order: Order) {
   return order.estado_general === "finalizada" || order.estado_general === "liquidada";
 }
 
+function isCancelledOrder(order: Order) {
+  return (
+    order.estado_general === "cancelada" ||
+    order.estado_pago === "rechazado" ||
+    order.estado_envio === "cancelado"
+  );
+}
+
+function getDaysSince(value: string, now: Date) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor((now.getTime() - date.getTime()) / dayInMilliseconds));
+}
+
 function getPercentChange(current: number, previous: number) {
   if (previous === 0) {
     return current === 0 ? 0 : 100;
@@ -328,38 +349,144 @@ function buildTrends({
 
 function buildOrderFunnel(orders: Order[]) {
   const paidOrders = orders.filter((order) => order.estado_pago === "aprobado");
-  const shippedOrders = orders.filter((order) => order.estado_envio === "despachado" || order.estado_envio === "entregado");
-  const completedOrders = orders.filter(isCompletedOrder);
+  const dispatchedOrders = paidOrders.filter(
+    (order) => order.estado_envio === "despachado" || order.estado_envio === "entregado"
+  );
+  const deliveredOrders = dispatchedOrders.filter((order) => order.estado_envio === "entregado");
+  const completedOrders = deliveredOrders.filter(isCompletedOrder);
+  const stages = [
+    { label: "Creadas", value: orders.length },
+    { label: "Pagadas", value: paidOrders.length },
+    { label: "Despachadas", value: dispatchedOrders.length },
+    { label: "Entregadas", value: deliveredOrders.length },
+    { label: "Completadas", value: completedOrders.length }
+  ];
+
+  return stages.map((stage, index) => {
+    const previousStage = stages[index - 1];
+    const conversionFromPrevious = previousStage ? percent(stage.value, previousStage.value) : null;
+
+    return {
+      ...stage,
+      detail: previousStage
+        ? `${conversionFromPrevious}% desde ${previousStage.label}`
+        : "Base del periodo seleccionado",
+      conversionFromPrevious,
+      conversionLabel: previousStage ? `vs ${previousStage.label}` : "Base"
+    };
+  });
+}
+
+function buildSystemFlow({
+  buyers,
+  orders,
+  payments,
+  products,
+  shipments
+}: {
+  buyers: Buyer[];
+  orders: Order[];
+  payments: Payment[];
+  products: Product[];
+  shipments: Shipment[];
+}): AnalyticsSnapshot["systemFlow"] {
+  const buyerIds = new Set(buyers.map((buyer) => buyer.clerk_user_id_comprador));
+  const orderIds = new Set(orders.map((order) => order.orden_id));
+  const buyerIdsWithOrders = new Set(orders.map((order) => order.comprador_id).filter((buyerId) => buyerIds.has(buyerId)));
+  const sellerIdsWithOrders = new Set(orders.map((order) => order.vendedor_id));
+  const activeProducts = products.filter((product) => product.estado_publicacion === "activa");
+  const approvedPayments = payments.filter((payment) => payment.estado === "aprobado");
+  const rejectedPayments = payments.filter((payment) => payment.estado === "rechazado");
+  const paymentOrderIds = new Set(payments.map((payment) => payment.orden_id).filter((orderId) => orderIds.has(orderId)));
+  const approvedPaymentOrderIds = new Set(
+    approvedPayments.map((payment) => payment.orden_id).filter((orderId) => orderIds.has(orderId))
+  );
+  const shipmentOrderIds = new Set(shipments.map((shipment) => shipment.orden_id).filter((orderId) => orderIds.has(orderId)));
+  const shippedPaidOrderIds = new Set(
+    shipments.map((shipment) => shipment.orden_id).filter((orderId) => approvedPaymentOrderIds.has(orderId))
+  );
+  const deliveredShipments = shipments.filter((shipment) => shipment.estado === "delivered");
+  const inTransitShipments = shipments.filter((shipment) => shipment.estado === "in_transit");
 
   return [
     {
-      label: "Creadas",
-      value: orders.length,
-      detail: "Ordenes registradas"
+      id: "buyer",
+      label: "Buyer",
+      value: buyers.length,
+      valueLabel: "compradores",
+      detail: "Demanda activa del periodo",
+      conversionToNext: percent(buyerIdsWithOrders.size, buyers.length),
+      conversionLabel: "compradores con orden",
+      metrics: [
+        { label: "Ordenes creadas", value: orders.length, format: "number" },
+        { label: "Compradores con orden", value: buyerIdsWithOrders.size, format: "number" }
+      ]
     },
     {
-      label: "Pagadas",
-      value: paidOrders.length,
-      detail: `${percent(paidOrders.length, orders.length)}% de ordenes creadas`
+      id: "seller",
+      label: "Seller",
+      value: sellerIdsWithOrders.size,
+      valueLabel: "vendedores",
+      detail: "Oferta conectada a ventas",
+      conversionToNext: percent(paymentOrderIds.size, orders.length),
+      conversionLabel: "ordenes con pago",
+      metrics: [
+        { label: "Productos activos", value: activeProducts.length, format: "number" },
+        { label: "Ordenes recibidas", value: orders.length, format: "number" }
+      ]
     },
     {
-      label: "Enviadas",
-      value: shippedOrders.length,
-      detail: `${percent(shippedOrders.length, orders.length)}% con envio iniciado`
+      id: "payments",
+      label: "Payments",
+      value: approvedPaymentOrderIds.size,
+      valueLabel: "ordenes pagadas",
+      detail: "Cobros vinculados a ordenes",
+      conversionToNext: percent(shippedPaidOrderIds.size, approvedPaymentOrderIds.size),
+      conversionLabel: "pagadas con envio",
+      metrics: [
+        { label: "Ingresos", value: sum(approvedPayments.map((payment) => payment.monto_total)), format: "currency" },
+        { label: "Pagos aprobados", value: approvedPayments.length, format: "number" },
+        { label: "Rechazados", value: rejectedPayments.length, format: "number" }
+      ]
     },
     {
-      label: "Finalizadas",
-      value: completedOrders.length,
-      detail: `${percent(completedOrders.length, orders.length)}% completadas`
+      id: "shipping",
+      label: "Shipping",
+      value: shipmentOrderIds.size,
+      valueLabel: "ordenes con envio",
+      detail: "Entrega y seguimiento",
+      conversionToNext: null,
+      conversionLabel: null,
+      metrics: [
+        { label: "Envios registrados", value: shipments.length, format: "number" },
+        { label: "Entregados", value: deliveredShipments.length, format: "number" },
+        { label: "En transito", value: inTransitShipments.length, format: "number" }
+      ]
     }
   ];
 }
 
-function buildOperationalAlerts(orders: Order[], payments: Payment[], shipments: Shipment[]) {
-  const pendingPayments = payments.filter((payment) => payment.estado === "pendiente");
+function buildOperationalAlerts(orders: Order[], payments: Payment[], shipments: Shipment[], products: Product[]) {
+  const now = new Date();
+  const ordersById = new Map(orders.map((order) => [order.orden_id, order]));
+  const delayedOrders = orders.filter(
+    (order) =>
+      !isCompletedOrder(order) &&
+      !isCancelledOrder(order) &&
+      getDaysSince(order.fecha_creacion, now) >= orderDelayDays
+  );
   const rejectedPayments = payments.filter((payment) => payment.estado === "rechazado");
-  const stalledOrders = orders.filter(
-    (order) => order.estado_pago === "aprobado" && order.estado_envio === "pendiente"
+  const delayedShipments = shipments.filter((shipment) => {
+    const order = ordersById.get(shipment.orden_id);
+
+    return (
+      shipment.estado !== "delivered" &&
+      (!order || !isCancelledOrder(order)) &&
+      getDaysSince(shipment.fecha_actualizacion, now) >= shipmentDelayDays
+    );
+  });
+  const outOfStockProducts = products.filter(
+    (product) => product.estado_publicacion === "activa" && typeof product.stock === "number" && product.stock <= 0
   );
   const alerts: AnalyticsSnapshot["operationalAlerts"] = [];
   const sellerBaseUrl = (process.env.SELLER_API_BASE_URL ?? "https://proyecto-c-seller-lama.vercel.app").replace(
@@ -374,17 +501,17 @@ function buildOperationalAlerts(orders: Order[], payments: Payment[], shipments:
     process.env.SHIPPING_API_BASE_URL ?? "https://proyecto-c-shipping-lama.vercel.app"
   ).replace(/\/$/, "");
 
-  if (pendingPayments.length > 0) {
+  if (delayedOrders.length > 0) {
     alerts.push({
-      id: "pending-payments",
-      title: "Pagos pendientes",
-      detail: `${pendingPayments.length} pagos todavia no fueron aprobados.`,
+      id: "delayed-orders",
+      title: "Ordenes demoradas",
+      detail: `${delayedOrders.length} ordenes superan ${orderDelayDays} dias sin completarse.`,
       severity: "warning",
-      items: pendingPayments.map((payment) => ({
-        id: payment.pago_id,
-        label: `${payment.pago_id} · orden ${payment.orden_id}`,
-        href: `${paymentsBaseUrl}/api/pagos?orden_id=${encodeURIComponent(payment.orden_id)}`,
-        type: "pago"
+      items: delayedOrders.map((order) => ({
+        id: order.orden_id,
+        label: `${order.orden_id} - ${order.estado_general}`,
+        href: `${sellerBaseUrl}/api/ordenes-ventas/${encodeURIComponent(order.orden_id)}`,
+        type: "orden"
       }))
     });
   }
@@ -397,24 +524,39 @@ function buildOperationalAlerts(orders: Order[], payments: Payment[], shipments:
       severity: "critical",
       items: rejectedPayments.map((payment) => ({
         id: payment.pago_id,
-        label: `${payment.pago_id} · orden ${payment.orden_id}`,
+        label: `${payment.pago_id} - orden ${payment.orden_id}`,
         href: `${paymentsBaseUrl}/api/pagos?orden_id=${encodeURIComponent(payment.orden_id)}`,
         type: "pago"
       }))
     });
   }
 
-  if (stalledOrders.length > 0) {
+  if (delayedShipments.length > 0) {
     alerts.push({
-      id: "stalled-orders",
-      title: "Ordenes pagadas sin envio",
-      detail: `${stalledOrders.length} ordenes aprobadas siguen con envio pendiente.`,
+      id: "delayed-shipments",
+      title: "Envios demorados",
+      detail: `${delayedShipments.length} envios llevan mas de ${shipmentDelayDays} dias sin entrega.`,
       severity: "warning",
-      items: stalledOrders.map((order) => ({
-        id: order.orden_id,
-        label: `${order.orden_id} · ${order.vendedor_id}`,
-        href: `${sellerBaseUrl}/api/ordenes-ventas/${encodeURIComponent(order.orden_id)}`,
-        type: "orden"
+      items: delayedShipments.map((shipment) => ({
+        id: shipment.envio_id,
+        label: `${shipment.envio_id} - orden ${shipment.orden_id}`,
+        href: `${shippingBaseUrl}/api/envios?orden_id=${encodeURIComponent(shipment.orden_id)}`,
+        type: "envio"
+      }))
+    });
+  }
+
+  if (outOfStockProducts.length > 0) {
+    alerts.push({
+      id: "out-of-stock-products",
+      title: "Productos sin stock",
+      detail: `${outOfStockProducts.length} productos activos figuran sin stock disponible.`,
+      severity: "warning",
+      items: outOfStockProducts.map((product) => ({
+        id: product.producto_id,
+        label: product.titulo,
+        href: `${sellerBaseUrl}/api/productos?producto_id=${encodeURIComponent(product.producto_id)}`,
+        type: "producto"
       }))
     });
   }
@@ -525,8 +667,15 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
       filteredBuyerPreferences,
       (preference) => preference.vendedores_preferidos
     ),
+    systemFlow: buildSystemFlow({
+      buyers: filteredBuyers,
+      orders: filteredOrders,
+      payments: filteredPayments,
+      products: filteredProducts,
+      shipments: filteredShipments
+    }),
     orderFunnel: buildOrderFunnel(filteredOrders),
-    operationalAlerts: buildOperationalAlerts(filteredOrders, filteredPayments, filteredShipments),
+    operationalAlerts: buildOperationalAlerts(filteredOrders, filteredPayments, filteredShipments, filteredProducts),
     topProducts: buildTopProducts(products, filteredOrders),
     topSellers: buildTopSellers(filteredOrders),
     recentOrders: [...filteredOrders].sort(sortRecentOrders).slice(0, 6),

@@ -66,6 +66,24 @@ function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function asOptionalNumber(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === "string" && value.trim() !== "") {
+      const parsedValue = Number(value);
+
+      if (Number.isFinite(parsedValue)) {
+        return parsedValue;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function normalizeProduct(value: unknown): Product | null {
   const product = asRecord(value);
 
@@ -85,6 +103,12 @@ function normalizeProduct(value: unknown): Product | null {
     categoria_id: asString(product.categoria_id),
     titulo: asString(product.titulo, "Producto sin titulo"),
     precio: asNumber(product.precio),
+    stock: asOptionalNumber(
+      product.stock,
+      product.stock_disponible,
+      product.cantidad_disponible,
+      product.cantidad
+    ),
     estado_prenda: asString(product.estado_prenda, "usado") as Product["estado_prenda"],
     talle: asString(product.talle, "U"),
     marca: asString(product.marca, "Sin marca"),
