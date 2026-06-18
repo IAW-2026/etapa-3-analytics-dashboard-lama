@@ -1,5 +1,10 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
 import {
+  buildTimeRangeHref,
+  getTimeRangeIdFromSearchParams,
+  type TimeRangeSearchParams
+} from "@/lib/time-range";
+import {
   AppChrome,
   formatCurrency,
   formatDate,
@@ -8,12 +13,22 @@ import {
   numberFormatter
 } from "./ui";
 
-export default async function Home() {
-  const snapshot = await getAnalyticsSnapshot();
+type PageProps = {
+  searchParams?: Promise<TimeRangeSearchParams>;
+};
+
+export default async function Home({ searchParams }: PageProps) {
+  const timeRangeId = getTimeRangeIdFromSearchParams(await searchParams);
+  const snapshot = await getAnalyticsSnapshot(timeRangeId);
   const integrationHealth = snapshot.kpis.integrationHealth;
 
   return (
-    <AppChrome active="inicio" generatedAt={snapshot.generatedAt} integrationHealth={integrationHealth}>
+    <AppChrome
+      active="inicio"
+      generatedAt={snapshot.generatedAt}
+      integrationHealth={integrationHealth}
+      timeRangeId={snapshot.timeRange.id}
+    >
       <section className="home-hero">
         <div>
           <p className="eyebrow">Analytics</p>
@@ -36,51 +51,58 @@ export default async function Home() {
       <section className="module-grid" aria-label="Accesos del analytics">
         <ModuleCard
           detail="Resumen visual del sistema"
-          href="/dashboard"
+          href={buildTimeRangeHref("/dashboard", snapshot.timeRange.id)}
           icon="activity"
           label="Dashboard"
+          trend={snapshot.trends.kpis.revenue}
           value={formatCurrency(snapshot.kpis.revenue)}
         />
         <ModuleCard
           detail="Estados y ordenes recientes"
-          href="/ordenes"
+          href={buildTimeRangeHref("/ordenes", snapshot.timeRange.id)}
           icon="bag"
           label="Ordenes"
+          trend={snapshot.trends.kpis.createdOrders}
           value={numberFormatter.format(snapshot.orderFunnel[0]?.value ?? 0)}
         />
         <ModuleCard
           detail="Aprobados, pendientes y alertas"
-          href="/pagos"
+          href={buildTimeRangeHref("/pagos", snapshot.timeRange.id)}
           icon="credit"
           label="Pagos"
+          trend={snapshot.trends.kpis.totalTransactions}
           value={numberFormatter.format(snapshot.kpis.totalTransactions)}
         />
         <ModuleCard
           detail="Catalogo activo y destacados"
-          href="/productos"
+          href={buildTimeRangeHref("/productos", snapshot.timeRange.id)}
           icon="package"
           label="Productos"
+          trend={snapshot.trends.kpis.activeProducts}
           value={numberFormatter.format(snapshot.kpis.activeProducts)}
         />
         <ModuleCard
           detail="Estados logisticos"
-          href="/envios"
+          href={buildTimeRangeHref("/envios", snapshot.timeRange.id)}
           icon="truck"
           label="Envios"
+          trend={snapshot.trends.kpis.totalShipments}
           value={numberFormatter.format(snapshot.shipmentsByStatus.reduce((total, item) => total + item.value, 0))}
         />
         <ModuleCard
           detail="Compradores y preferencias"
-          href="/usuarios"
+          href={buildTimeRangeHref("/usuarios", snapshot.timeRange.id)}
           icon="users"
           label="Usuarios"
+          trend={snapshot.trends.kpis.activeUsers}
           value={numberFormatter.format(snapshot.kpis.activeUsers)}
         />
         <ModuleCard
           detail="APIs conectadas y fallback"
-          href="/fuentes"
+          href={buildTimeRangeHref("/fuentes", snapshot.timeRange.id)}
           icon="database"
           label="Fuentes"
+          trend={snapshot.trends.kpis.integrationHealth}
           value={`${integrationHealth}%`}
         />
       </section>

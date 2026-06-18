@@ -1,14 +1,25 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
-import { AppChrome, formatCurrency, getMetric, HorizontalBars, numberFormatter } from "../ui";
+import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
+import { AppChrome, formatCurrency, getMetric, HorizontalBars, MetricPanel, numberFormatter } from "../ui";
 
-export default async function PaymentsPage() {
-  const snapshot = await getAnalyticsSnapshot();
+type PageProps = {
+  searchParams?: Promise<TimeRangeSearchParams>;
+};
+
+export default async function PaymentsPage({ searchParams }: PageProps) {
+  const timeRangeId = getTimeRangeIdFromSearchParams(await searchParams);
+  const snapshot = await getAnalyticsSnapshot(timeRangeId);
   const paymentAlerts = snapshot.operationalAlerts.filter(
     (alert) => alert.id.includes("payment") || alert.items.some((item) => item.type === "pago")
   );
 
   return (
-    <AppChrome active="pagos" generatedAt={snapshot.generatedAt} integrationHealth={snapshot.kpis.integrationHealth}>
+    <AppChrome
+      active="pagos"
+      generatedAt={snapshot.generatedAt}
+      integrationHealth={snapshot.kpis.integrationHealth}
+      timeRangeId={snapshot.timeRange.id}
+    >
       <section className="page-hero compact">
         <p className="eyebrow">Finanzas</p>
         <h1>Pagos</h1>
@@ -16,21 +27,24 @@ export default async function PaymentsPage() {
       </section>
 
       <section className="detail-grid">
-        <article className="panel">
-          <p className="eyebrow">Ingresos aprobados</p>
-          <strong className="metric-large">{formatCurrency(snapshot.kpis.revenue)}</strong>
-          <span className="muted-text">{numberFormatter.format(snapshot.kpis.totalTransactions)} transacciones aprobadas</span>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">Pendientes</p>
-          <strong className="metric-large">{numberFormatter.format(getMetric(snapshot.paymentsByStatus, "pendiente"))}</strong>
-          <span className="muted-text">{formatCurrency(snapshot.kpis.pendingRevenue)} pendientes de aprobacion</span>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">Ticket promedio</p>
-          <strong className="metric-large">{formatCurrency(snapshot.kpis.averageOrderValue)}</strong>
-          <span className="muted-text">Sobre pagos aprobados</span>
-        </article>
+        <MetricPanel
+          detail={`${numberFormatter.format(snapshot.kpis.totalTransactions)} transacciones aprobadas`}
+          label="Ingresos aprobados"
+          trend={snapshot.trends.kpis.revenue}
+          value={formatCurrency(snapshot.kpis.revenue)}
+        />
+        <MetricPanel
+          detail={`${formatCurrency(snapshot.kpis.pendingRevenue)} pendientes de aprobacion`}
+          label="Pendientes"
+          trend={snapshot.trends.kpis.pendingPayments}
+          value={numberFormatter.format(getMetric(snapshot.paymentsByStatus, "pendiente"))}
+        />
+        <MetricPanel
+          detail="Sobre pagos aprobados"
+          label="Ticket promedio"
+          trend={snapshot.trends.kpis.averageOrderValue}
+          value={formatCurrency(snapshot.kpis.averageOrderValue)}
+        />
       </section>
 
       <section className="dashboard-grid">

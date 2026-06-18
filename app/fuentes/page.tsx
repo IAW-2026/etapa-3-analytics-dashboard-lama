@@ -1,11 +1,22 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
+import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
 import { AppChrome, formatLabel } from "../ui";
 
-export default async function SourcesPage() {
-  const snapshot = await getAnalyticsSnapshot();
+type PageProps = {
+  searchParams?: Promise<TimeRangeSearchParams>;
+};
+
+export default async function SourcesPage({ searchParams }: PageProps) {
+  const timeRangeId = getTimeRangeIdFromSearchParams(await searchParams);
+  const snapshot = await getAnalyticsSnapshot(timeRangeId);
 
   return (
-    <AppChrome active="fuentes" generatedAt={snapshot.generatedAt} integrationHealth={snapshot.kpis.integrationHealth}>
+    <AppChrome
+      active="fuentes"
+      generatedAt={snapshot.generatedAt}
+      integrationHealth={snapshot.kpis.integrationHealth}
+      timeRangeId={snapshot.timeRange.id}
+    >
       <section className="page-hero compact">
         <p className="eyebrow">Integraciones</p>
         <h1>Fuentes</h1>

@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
+import { buildTimeRangeHref } from "@/lib/time-range";
+import type { TimeRangeId, TrendMetric } from "@/lib/types";
 
 import { ThemeToggle } from "./theme-toggle";
+import { TimeRangeSelector } from "./time-range-selector";
 
 export const moneyFormatter = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0
@@ -12,11 +15,14 @@ export const numberFormatter = new Intl.NumberFormat("es-AR");
 
 export type IconName =
   | "activity"
+  | "arrowDown"
+  | "arrowUp"
   | "bag"
   | "check"
   | "credit"
   | "database"
   | "home"
+  | "minus"
   | "package"
   | "refresh"
   | "star"
@@ -45,6 +51,16 @@ const navItems: NavItem[] = [
 
 export function formatCurrency(value: number) {
   return `$${moneyFormatter.format(value)}`;
+}
+
+export function formatTrendPercent(value: number) {
+  const absoluteValue = Math.abs(value);
+  const formattedValue = new Intl.NumberFormat("es-AR", {
+    maximumFractionDigits: absoluteValue > 0 && absoluteValue < 10 ? 1 : 0
+  }).format(absoluteValue);
+  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
+
+  return `${sign}${formattedValue}%`;
 }
 
 export function formatDate(value: string) {
@@ -126,6 +142,18 @@ export function Icon({ name }: { name: IconName }) {
     <span className="line-icon" aria-hidden="true">
       <svg {...commonProps}>
         {name === "activity" ? <path d="M3 12h4l2-6 4 12 2-6h6" /> : null}
+        {name === "arrowDown" ? (
+          <>
+            <path d="M12 5v14" />
+            <path d="m18 13-6 6-6-6" />
+          </>
+        ) : null}
+        {name === "arrowUp" ? (
+          <>
+            <path d="M12 19V5" />
+            <path d="m6 11 6-6 6 6" />
+          </>
+        ) : null}
         {name === "bag" ? (
           <>
             <path d="M6 8h12l-1 12H7L6 8Z" />
@@ -158,6 +186,7 @@ export function Icon({ name }: { name: IconName }) {
             <path d="M10 19v-5h4v5" />
           </>
         ) : null}
+        {name === "minus" ? <path d="M5 12h14" /> : null}
         {name === "package" ? (
           <>
             <path d="m4.5 8 7.5-4 7.5 4-7.5 4-7.5-4Z" />
@@ -208,17 +237,38 @@ export function Icon({ name }: { name: IconName }) {
   );
 }
 
+export function TrendBadge({ trend }: { trend?: TrendMetric }) {
+  if (!trend) {
+    return null;
+  }
+
+  const icon = trend.direction === "up" ? "arrowUp" : trend.direction === "down" ? "arrowDown" : "minus";
+  const value = formatTrendPercent(trend.percentChange);
+
+  return (
+    <span className={`trend-badge trend-${trend.tone}`} aria-label={`${value} vs periodo anterior`}>
+      <Icon name={icon} />
+      <strong>{value}</strong>
+      <small>vs periodo anterior</small>
+    </span>
+  );
+}
+
 export function AppChrome({
   active,
   children,
   generatedAt,
-  integrationHealth
+  integrationHealth,
+  timeRangeId
 }: {
   active: string;
   children: ReactNode;
   generatedAt: string;
   integrationHealth: number;
+  timeRangeId: TimeRangeId;
 }) {
+  const refreshHref = buildTimeRangeHref(active === "inicio" ? "/" : `/${active}`, timeRangeId);
+
   return (
     <main className="app-page">
       <header className="topbar">
@@ -228,13 +278,9 @@ export function AppChrome({
         </div>
         <div className="topbar-center">Analytics</div>
         <div className="topbar-actions">
-          <span className="greeting">¡Hola!</span>
-          <span className="connection-chip">
-            <Icon name="database" />
-            {integrationHealth}% fuentes conectadas
-          </span>
+          <TimeRangeSelector activeRange={timeRangeId} />
           <ThemeToggle />
-          <a className="refresh-button" href={active === "inicio" ? "/" : `/${active}`} aria-label="Actualizar datos">
+          <a className="refresh-button" href={refreshHref} aria-label="Actualizar datos">
             <Icon name="refresh" />
           </a>
           <UserButton />
@@ -243,7 +289,7 @@ export function AppChrome({
 
       <nav className="section-nav" aria-label="Secciones de analytics">
         {navItems.map((item) => (
-          <Link className={active === item.id ? "active" : ""} href={item.href} key={item.id}>
+          <Link className={active === item.id ? "active" : ""} href={buildTimeRangeHref(item.href, timeRangeId)} key={item.id}>
             <Icon name={item.icon} />
             {item.label}
           </Link>
@@ -287,12 +333,14 @@ export function ModuleCard({
   href,
   icon,
   label,
+  trend,
   value
 }: {
   detail: string;
   href: string;
   icon: IconName;
   label: string;
+  trend?: TrendMetric;
   value: string;
 }) {
   return (
@@ -303,6 +351,7 @@ export function ModuleCard({
       <p>{label}</p>
       <strong>{value}</strong>
       <span>{detail}</span>
+      <TrendBadge trend={trend} />
     </Link>
   );
 }
@@ -312,12 +361,14 @@ export function KpiCard({
   detail,
   icon,
   label,
+  trend,
   value
 }: {
   badge: string;
   detail: string;
   icon: IconName;
   label: string;
+  trend?: TrendMetric;
   value: string;
 }) {
   return (
@@ -329,6 +380,28 @@ export function KpiCard({
       <strong>{value}</strong>
       <span>{detail}</span>
       <b>{badge}</b>
+      <TrendBadge trend={trend} />
+    </article>
+  );
+}
+
+export function MetricPanel({
+  detail,
+  label,
+  trend,
+  value
+}: {
+  detail: string;
+  label: string;
+  trend?: TrendMetric;
+  value: string;
+}) {
+  return (
+    <article className="panel metric-panel">
+      <p className="eyebrow">{label}</p>
+      <strong className="metric-large">{value}</strong>
+      <span className="muted-text">{detail}</span>
+      <TrendBadge trend={trend} />
     </article>
   );
 }

@@ -92,8 +92,47 @@ export type Review = {
   fecha_creacion: string;
 };
 
+export type TrendDirection = "up" | "down" | "flat";
+
+export type TrendTone = "positive" | "negative" | "neutral";
+
+export type TrendMetric = {
+  current: number;
+  previous: number;
+  percentChange: number;
+  direction: TrendDirection;
+  tone: TrendTone;
+};
+
+export type TimeRangeId = "all" | "30d" | "90d" | "month" | "previous-month";
+
+export type AnalyticsTimeRange = {
+  id: TimeRangeId;
+  label: string;
+  startDate: string | null;
+  endDate: string | null;
+  previousStartDate: string | null;
+  previousEndDate: string | null;
+};
+
+export type KpiTrendKey =
+  | "activeProducts"
+  | "activeUsers"
+  | "averageOrderValue"
+  | "averageRating"
+  | "completedOrders"
+  | "completionRate"
+  | "createdOrders"
+  | "integrationHealth"
+  | "pendingPayments"
+  | "pendingRevenue"
+  | "revenue"
+  | "totalShipments"
+  | "totalTransactions";
+
 export type AnalyticsSnapshot = {
   generatedAt: string;
+  timeRange: AnalyticsTimeRange;
   kpis: {
     totalTransactions: number;
     activeUsers: number;
@@ -105,6 +144,10 @@ export type AnalyticsSnapshot = {
     pendingRevenue: number;
     completionRate: number;
     integrationHealth: number;
+  };
+  trends: {
+    kpis: Record<KpiTrendKey, TrendMetric>;
+    shipmentsByStatus: Record<string, TrendMetric>;
   };
   revenueByMonth: Array<{ label: string; revenue: number; orders: number }>;
   ordersByStatus: Array<{ label: string; value: number }>;

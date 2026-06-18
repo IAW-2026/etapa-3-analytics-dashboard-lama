@@ -1,11 +1,22 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
-import { AppChrome, formatCurrency, numberFormatter } from "../ui";
+import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
+import { AppChrome, formatCurrency, MetricPanel, numberFormatter } from "../ui";
 
-export default async function ProductsPage() {
-  const snapshot = await getAnalyticsSnapshot();
+type PageProps = {
+  searchParams?: Promise<TimeRangeSearchParams>;
+};
+
+export default async function ProductsPage({ searchParams }: PageProps) {
+  const timeRangeId = getTimeRangeIdFromSearchParams(await searchParams);
+  const snapshot = await getAnalyticsSnapshot(timeRangeId);
 
   return (
-    <AppChrome active="productos" generatedAt={snapshot.generatedAt} integrationHealth={snapshot.kpis.integrationHealth}>
+    <AppChrome
+      active="productos"
+      generatedAt={snapshot.generatedAt}
+      integrationHealth={snapshot.kpis.integrationHealth}
+      timeRangeId={snapshot.timeRange.id}
+    >
       <section className="page-hero compact">
         <p className="eyebrow">Catalogo</p>
         <h1>Productos</h1>
@@ -13,21 +24,24 @@ export default async function ProductsPage() {
       </section>
 
       <section className="detail-grid">
-        <article className="panel">
-          <p className="eyebrow">Activos</p>
-          <strong className="metric-large">{numberFormatter.format(snapshot.kpis.activeProducts)}</strong>
-          <span className="muted-text">Publicaciones disponibles</span>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">Ticket promedio</p>
-          <strong className="metric-large">{formatCurrency(snapshot.kpis.averageOrderValue)}</strong>
-          <span className="muted-text">Sobre pagos aprobados</span>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">Ingresos aprobados</p>
-          <strong className="metric-large">{formatCurrency(snapshot.kpis.revenue)}</strong>
-          <span className="muted-text">Total consolidado</span>
-        </article>
+        <MetricPanel
+          detail="Publicaciones disponibles"
+          label="Activos"
+          trend={snapshot.trends.kpis.activeProducts}
+          value={numberFormatter.format(snapshot.kpis.activeProducts)}
+        />
+        <MetricPanel
+          detail="Sobre pagos aprobados"
+          label="Ticket promedio"
+          trend={snapshot.trends.kpis.averageOrderValue}
+          value={formatCurrency(snapshot.kpis.averageOrderValue)}
+        />
+        <MetricPanel
+          detail="Total consolidado"
+          label="Ingresos aprobados"
+          trend={snapshot.trends.kpis.revenue}
+          value={formatCurrency(snapshot.kpis.revenue)}
+        />
       </section>
 
       <section className="panel">

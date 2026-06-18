@@ -1,4 +1,5 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
+import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
 import {
   AppChrome,
   BarChart,
@@ -12,8 +13,13 @@ import {
   numberFormatter
 } from "../ui";
 
-export default async function DashboardPage() {
-  const snapshot = await getAnalyticsSnapshot();
+type PageProps = {
+  searchParams?: Promise<TimeRangeSearchParams>;
+};
+
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const timeRangeId = getTimeRangeIdFromSearchParams(await searchParams);
+  const snapshot = await getAnalyticsSnapshot(timeRangeId);
   const paymentRows = [
     {
       label: "Aprobados",
@@ -33,7 +39,12 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <AppChrome active="dashboard" generatedAt={snapshot.generatedAt} integrationHealth={snapshot.kpis.integrationHealth}>
+    <AppChrome
+      active="dashboard"
+      generatedAt={snapshot.generatedAt}
+      integrationHealth={snapshot.kpis.integrationHealth}
+      timeRangeId={snapshot.timeRange.id}
+    >
       <section className="page-hero">
         <p className="eyebrow">Sistema LAMA</p>
         <h1>Dashboard operativo</h1>
@@ -46,6 +57,7 @@ export default async function DashboardPage() {
           detail={`${numberFormatter.format(snapshot.kpis.totalTransactions)} transacciones aprobadas`}
           icon="wallet"
           label="Ingresos aprobados"
+          trend={snapshot.trends.kpis.revenue}
           value={formatCurrency(snapshot.kpis.revenue)}
         />
         <KpiCard
@@ -53,6 +65,7 @@ export default async function DashboardPage() {
           detail="Compradores registrados en Buyer"
           icon="users"
           label="Usuarios activos"
+          trend={snapshot.trends.kpis.activeUsers}
           value={numberFormatter.format(snapshot.kpis.activeUsers)}
         />
         <KpiCard
@@ -60,6 +73,7 @@ export default async function DashboardPage() {
           detail="Ordenes finalizadas"
           icon="bag"
           label="Pedidos completados"
+          trend={snapshot.trends.kpis.completedOrders}
           value={numberFormatter.format(snapshot.kpis.completedOrders)}
         />
         <KpiCard
@@ -67,6 +81,7 @@ export default async function DashboardPage() {
           detail="Sobre reviews disponibles"
           icon="star"
           label="Calificacion promedio"
+          trend={snapshot.trends.kpis.averageRating}
           value={snapshot.kpis.averageRating.toFixed(1)}
         />
       </section>

@@ -1,12 +1,23 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
-import { AppChrome, HorizontalBars, numberFormatter } from "../ui";
+import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
+import { AppChrome, HorizontalBars, MetricPanel, numberFormatter } from "../ui";
 
-export default async function ShipmentsPage() {
-  const snapshot = await getAnalyticsSnapshot();
+type PageProps = {
+  searchParams?: Promise<TimeRangeSearchParams>;
+};
+
+export default async function ShipmentsPage({ searchParams }: PageProps) {
+  const timeRangeId = getTimeRangeIdFromSearchParams(await searchParams);
+  const snapshot = await getAnalyticsSnapshot(timeRangeId);
   const totalShipments = snapshot.shipmentsByStatus.reduce((total, item) => total + item.value, 0);
 
   return (
-    <AppChrome active="envios" generatedAt={snapshot.generatedAt} integrationHealth={snapshot.kpis.integrationHealth}>
+    <AppChrome
+      active="envios"
+      generatedAt={snapshot.generatedAt}
+      integrationHealth={snapshot.kpis.integrationHealth}
+      timeRangeId={snapshot.timeRange.id}
+    >
       <section className="page-hero compact">
         <p className="eyebrow">Logistica</p>
         <h1>Envios</h1>
@@ -14,17 +25,20 @@ export default async function ShipmentsPage() {
       </section>
 
       <section className="detail-grid">
-        <article className="panel">
-          <p className="eyebrow">Envios</p>
-          <strong className="metric-large">{numberFormatter.format(totalShipments)}</strong>
-          <span className="muted-text">Registros logisticos</span>
-        </article>
+        <MetricPanel
+          detail="Registros logisticos"
+          label="Envios"
+          trend={snapshot.trends.kpis.totalShipments}
+          value={numberFormatter.format(totalShipments)}
+        />
         {snapshot.shipmentsByStatus.slice(0, 2).map((item) => (
-          <article className="panel" key={item.label}>
-            <p className="eyebrow">{item.label}</p>
-            <strong className="metric-large">{numberFormatter.format(item.value)}</strong>
-            <span className="muted-text">Estado reportado</span>
-          </article>
+          <MetricPanel
+            detail="Estado reportado"
+            key={item.label}
+            label={item.label}
+            trend={snapshot.trends.shipmentsByStatus[item.label]}
+            value={numberFormatter.format(item.value)}
+          />
         ))}
       </section>
 

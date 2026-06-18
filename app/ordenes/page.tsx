@@ -1,11 +1,22 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
-import { AppChrome, formatCurrency, Funnel, HorizontalBars, numberFormatter, StatusPill } from "../ui";
+import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
+import { AppChrome, formatCurrency, Funnel, HorizontalBars, MetricPanel, numberFormatter, StatusPill } from "../ui";
 
-export default async function OrdersPage() {
-  const snapshot = await getAnalyticsSnapshot();
+type PageProps = {
+  searchParams?: Promise<TimeRangeSearchParams>;
+};
+
+export default async function OrdersPage({ searchParams }: PageProps) {
+  const timeRangeId = getTimeRangeIdFromSearchParams(await searchParams);
+  const snapshot = await getAnalyticsSnapshot(timeRangeId);
 
   return (
-    <AppChrome active="ordenes" generatedAt={snapshot.generatedAt} integrationHealth={snapshot.kpis.integrationHealth}>
+    <AppChrome
+      active="ordenes"
+      generatedAt={snapshot.generatedAt}
+      integrationHealth={snapshot.kpis.integrationHealth}
+      timeRangeId={snapshot.timeRange.id}
+    >
       <section className="page-hero compact">
         <p className="eyebrow">Operacion</p>
         <h1>Ordenes</h1>
@@ -13,21 +24,24 @@ export default async function OrdersPage() {
       </section>
 
       <section className="detail-grid">
-        <article className="panel">
-          <p className="eyebrow">Creadas</p>
-          <strong className="metric-large">{numberFormatter.format(snapshot.orderFunnel[0]?.value ?? 0)}</strong>
-          <span className="muted-text">Ordenes registradas</span>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">Completadas</p>
-          <strong className="metric-large">{numberFormatter.format(snapshot.kpis.completedOrders)}</strong>
-          <span className="muted-text">Ordenes finalizadas</span>
-        </article>
-        <article className="panel">
-          <p className="eyebrow">Finalizacion</p>
-          <strong className="metric-large">{snapshot.kpis.completionRate}%</strong>
-          <span className="muted-text">Finalizadas sobre creadas</span>
-        </article>
+        <MetricPanel
+          detail="Ordenes registradas"
+          label="Creadas"
+          trend={snapshot.trends.kpis.createdOrders}
+          value={numberFormatter.format(snapshot.orderFunnel[0]?.value ?? 0)}
+        />
+        <MetricPanel
+          detail="Ordenes finalizadas"
+          label="Completadas"
+          trend={snapshot.trends.kpis.completedOrders}
+          value={numberFormatter.format(snapshot.kpis.completedOrders)}
+        />
+        <MetricPanel
+          detail="Finalizadas sobre creadas"
+          label="Finalizacion"
+          trend={snapshot.trends.kpis.completionRate}
+          value={`${snapshot.kpis.completionRate}%`}
+        />
       </section>
 
       <section className="dashboard-grid">
