@@ -856,6 +856,102 @@ span.trend-neutral {
   gap: 12px;
 }
 
+.ranked-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ranked-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ranked-row:last-child {
+  border-bottom: 0;
+}
+
+.ranked-index {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.ranked-main {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.ranked-copy {
+  display: flex;
+  min-width: 0;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.ranked-copy strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.98rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranked-copy span {
+  color: rgba(55, 65, 61, 0.68);
+  font-size: 0.82rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+:root[data-theme="dark"] .ranked-copy span {
+  color: rgba(246, 241, 231, 0.72);
+}
+
+.ranked-track {
+  overflow: hidden;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--soft);
+}
+
+.ranked-track div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.ranked-value {
+  color: var(--ink);
+  font-size: 0.96rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.empty-state {
+  margin: 0;
+  color: rgba(55, 65, 61, 0.68);
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+
+:root[data-theme="dark"] .empty-state {
+  color: rgba(246, 241, 231, 0.72);
+}
+
 .detail-row {
   display: flex;
   align-items: center;
@@ -1111,10 +1207,19 @@ tr:last-child td {
   .panel-heading,
   .detail-heading,
   .detail-row,
+  .ranked-copy,
   .horizontal-label {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .ranked-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .ranked-value {
+    grid-column: 2;
   }
 
   .chart {

@@ -532,6 +532,55 @@ export function DetailCard({
   );
 }
 
+export function TopProductsPanel({
+  detail = "Ordenados por unidades vendidas",
+  products,
+  title = "Top productos mas vendidos"
+}: {
+  detail?: string;
+  products: Array<{ productId: string; title: string; units: number; revenue: number }>;
+  title?: string;
+}) {
+  const maxUnits = Math.max(...products.map((product) => product.units), 1);
+
+  return (
+    <section className="panel">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">Productos</p>
+          <h2>
+            <Icon name="package" />
+            {title}
+          </h2>
+          <span>{detail}</span>
+        </div>
+      </div>
+
+      {products.length > 0 ? (
+        <div className="ranked-list">
+          {products.map((product, index) => (
+            <article className="ranked-row" key={product.productId}>
+              <span className="ranked-index">{String(index + 1).padStart(2, "0")}</span>
+              <div className="ranked-main">
+                <div className="ranked-copy">
+                  <strong>{product.title}</strong>
+                  <span>{numberFormatter.format(product.units)} unidades vendidas</span>
+                </div>
+                <div className="ranked-track">
+                  <div style={{ width: `${Math.max((product.units / maxUnits) * 100, 8)}%` }} />
+                </div>
+              </div>
+              <strong className="ranked-value">{formatCurrency(product.revenue)}</strong>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-state">Sin productos vendidos en el periodo seleccionado.</p>
+      )}
+    </section>
+  );
+}
+
 export function StatusPill({ status }: { status: string }) {
   return <span className={`status-pill status-${status}`}>{formatLabel(status)}</span>;
 }

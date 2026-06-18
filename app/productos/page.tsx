@@ -1,6 +1,6 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
 import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
-import { AppChrome, formatCurrency, MetricPanel, numberFormatter } from "../ui";
+import { AppChrome, formatCurrency, MetricPanel, numberFormatter, TopProductsPanel } from "../ui";
 
 type PageProps = {
   searchParams?: Promise<TimeRangeSearchParams>;
@@ -44,34 +44,7 @@ export default async function ProductsPage({ searchParams }: PageProps) {
         />
       </section>
 
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Ranking</p>
-            <h2>Productos destacados</h2>
-          </div>
-        </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Unidades</th>
-                <th>Ingresos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {snapshot.topProducts.map((product) => (
-                <tr key={product.productId}>
-                  <td>{product.title}</td>
-                  <td>{product.units}</td>
-                  <td>{formatCurrency(product.revenue)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <TopProductsPanel products={snapshot.topProducts} />
     </AppChrome>
   );
 }

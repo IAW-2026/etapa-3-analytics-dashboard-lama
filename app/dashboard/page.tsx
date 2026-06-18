@@ -10,7 +10,8 @@ import {
   HorizontalBars,
   Icon,
   KpiCard,
-  numberFormatter
+  numberFormatter,
+  TopProductsPanel
 } from "../ui";
 
 type PageProps = {
@@ -115,6 +116,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <HorizontalBars data={snapshot.orderFunnel.map(({ label, value }) => ({ label, value }))} valueLabel="ordenes" />
         </article>
       </section>
+
+      <TopProductsPanel products={snapshot.topProducts} />
 
       <section className="panel">
         <div className="panel-heading">

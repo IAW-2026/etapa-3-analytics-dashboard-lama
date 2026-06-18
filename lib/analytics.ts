@@ -100,7 +100,7 @@ function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
     });
 
   return Array.from(productStats.values())
-    .sort((first, second) => second.revenue - first.revenue)
+    .sort((first, second) => second.units - first.units || second.revenue - first.revenue)
     .slice(0, 5);
 }
 
