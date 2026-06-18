@@ -21,6 +21,7 @@ export type IconName =
   | "check"
   | "credit"
   | "database"
+  | "download"
   | "home"
   | "minus"
   | "package"
@@ -63,6 +64,30 @@ export function formatTrendPercent(value: number) {
   const sign = value > 0 ? "+" : value < 0 ? "-" : "";
 
   return `${sign}${formattedValue}%`;
+}
+
+export function formatDurationDays(value: number) {
+  if (value === 0) {
+    return "0 dias";
+  }
+
+  if (value > 0 && value < 1) {
+    return "<1 dia";
+  }
+
+  return `${new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 }).format(value)} dias`;
+}
+
+export function formatDurationHours(value: number) {
+  if (value === 0) {
+    return "0 h";
+  }
+
+  if (value > 0 && value < 1) {
+    return "<1 h";
+  }
+
+  return `${new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 }).format(value)} h`;
 }
 
 export function formatDate(value: string) {
@@ -179,6 +204,13 @@ export function Icon({ name }: { name: IconName }) {
             <ellipse cx="12" cy="6" rx="7" ry="3" />
             <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6" />
             <path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
+          </>
+        ) : null}
+        {name === "download" ? (
+          <>
+            <path d="M12 4v10" />
+            <path d="m8 10 4 4 4-4" />
+            <path d="M5 19h14" />
           </>
         ) : null}
         {name === "home" ? (
@@ -412,6 +444,33 @@ export function MetricPanel({
       <span className="muted-text">{detail}</span>
       <TrendBadge trend={trend} />
     </article>
+  );
+}
+
+export function ReportExportActions({ timeRangeId }: { timeRangeId: TimeRangeId }) {
+  const csvHref = buildTimeRangeHref("/api/reports/csv", timeRangeId);
+  const pdfHref = buildTimeRangeHref("/api/reports/pdf", timeRangeId);
+
+  return (
+    <section className="report-actions" aria-label="Exportar reportes">
+      <div>
+        <p className="eyebrow">Reportes</p>
+        <h2>
+          <Icon name="download" />
+          Exportar reporte
+        </h2>
+      </div>
+      <div className="report-buttons">
+        <a download href={csvHref}>
+          <Icon name="download" />
+          CSV
+        </a>
+        <a download href={pdfHref}>
+          <Icon name="download" />
+          PDF
+        </a>
+      </div>
+    </section>
   );
 }
 

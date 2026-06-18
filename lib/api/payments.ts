@@ -71,7 +71,10 @@ function normalizePayment(value: unknown): Payment | null {
     monto_envio: asNumber(payment.monto_envio),
     monto_total: asNumber(payment.monto_total),
     estado: asString(payment.estado, "pendiente") as Payment["estado"],
-    fecha_creacion: asString(payment.fecha_creacion, new Date().toISOString())
+    fecha_creacion: asString(payment.fecha_creacion, new Date().toISOString()),
+    fecha_actualizacion: asString(payment.fecha_actualizacion, asString(payment.fechaActualizacion)) || undefined,
+    fecha_aprobacion:
+      asString(payment.fecha_aprobacion, asString(payment.fechaAprobacion, asString(payment.approved_at))) || undefined
   };
 }
 

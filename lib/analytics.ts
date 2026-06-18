@@ -28,6 +28,7 @@ import type {
 const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "short" });
 const dayMonthFormatter = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "short" });
 const dayInMilliseconds = 24 * 60 * 60 * 1000;
+const hourInMilliseconds = 60 * 60 * 1000;
 const orderDelayDays = 5;
 const shipmentDelayDays = 3;
 const weekdayFormatter = new Intl.DateTimeFormat("es-AR", { weekday: "long" });
@@ -279,6 +280,53 @@ function getDaysSince(value: string, now: Date) {
   return Math.max(0, Math.floor((now.getTime() - date.getTime()) / dayInMilliseconds));
 }
 
+function getDuration(startValue: string | undefined, endValue: string | undefined, unitInMilliseconds: number) {
+  if (!startValue || !endValue) {
+    return null;
+  }
+
+  const start = new Date(startValue);
+  const end = new Date(endValue);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return null;
+  }
+
+  return (end.getTime() - start.getTime()) / unitInMilliseconds;
+}
+
+function getAverageDeliveryTimeDays(orders: Order[], shipments: Shipment[]) {
+  const ordersById = new Map(orders.map((order) => [order.orden_id, order]));
+  const durations = shipments
+    .filter((shipment) => shipment.estado === "delivered")
+    .map((shipment) => {
+      const order = ordersById.get(shipment.orden_id);
+
+      return getDuration(order?.fecha_creacion, shipment.fecha_entrega ?? shipment.fecha_actualizacion, dayInMilliseconds);
+    })
+    .filter((duration): duration is number => duration !== null);
+
+  return average(durations);
+}
+
+function getAveragePaymentProcessingHours(orders: Order[], payments: Payment[]) {
+  const ordersById = new Map(orders.map((order) => [order.orden_id, order]));
+  const durations = payments
+    .filter((payment) => payment.estado === "aprobado")
+    .map((payment) => {
+      const order = ordersById.get(payment.orden_id);
+
+      return getDuration(
+        order?.fecha_creacion,
+        payment.fecha_aprobacion ?? payment.fecha_actualizacion ?? payment.fecha_creacion,
+        hourInMilliseconds
+      );
+    })
+    .filter((duration): duration is number => duration !== null);
+
+  return average(durations);
+}
+
 function getTemporalBucket(value: string, timeRange: AnalyticsTimeRange) {
   const date = new Date(value);
 
@@ -463,9 +511,19 @@ function buildTrends({
     kpis: {
       activeProducts: buildTrend(currentActiveProducts.length, previousActiveProducts.length),
       activeUsers: buildTrend(currentBuyers.length, previousBuyers.length),
+      averageDeliveryTimeDays: buildTrend(
+        getAverageDeliveryTimeDays(currentOrders, currentShipments),
+        getAverageDeliveryTimeDays(previousOrders, previousShipments),
+        "lower"
+      ),
       averageOrderValue: buildTrend(
         average(currentApprovedPayments.map((payment) => payment.monto_total)),
         average(previousApprovedPayments.map((payment) => payment.monto_total))
+      ),
+      averagePaymentProcessingHours: buildTrend(
+        getAveragePaymentProcessingHours(currentOrders, currentPayments),
+        getAveragePaymentProcessingHours(previousOrders, previousPayments),
+        "lower"
       ),
       averageRating: buildTrend(
         average(currentReviews.map((review) => review.calificacion)),
@@ -800,6 +858,8 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
       activeProducts: filteredProducts.filter((product) => product.estado_publicacion === "activa").length,
       averageOrderValue:
         approvedPayments.length > 0 ? sum(approvedPayments.map((payment) => payment.monto_total)) / approvedPayments.length : 0,
+      averageDeliveryTimeDays: getAverageDeliveryTimeDays(filteredOrders, filteredShipments),
+      averagePaymentProcessingHours: getAveragePaymentProcessingHours(filteredOrders, filteredPayments),
       pendingRevenue: sum(pendingPayments.map((payment) => payment.monto_total)),
       completionRate: percent(completedOrders.length, filteredOrders.length),
       integrationHealth

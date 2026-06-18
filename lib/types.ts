@@ -73,6 +73,8 @@ export type Payment = {
   monto_total: number;
   estado: PaymentStatus;
   fecha_creacion: string;
+  fecha_actualizacion?: string;
+  fecha_aprobacion?: string;
 };
 
 export type Shipment = {
@@ -82,6 +84,7 @@ export type Shipment = {
   empresa_logistica: string;
   estado: ShipmentStatus;
   fecha_actualizacion: string;
+  fecha_entrega?: string;
 };
 
 export type Review = {
@@ -119,7 +122,9 @@ export type AnalyticsTimeRange = {
 export type KpiTrendKey =
   | "activeProducts"
   | "activeUsers"
+  | "averageDeliveryTimeDays"
   | "averageOrderValue"
+  | "averagePaymentProcessingHours"
   | "averageRating"
   | "completedOrders"
   | "completionRate"
@@ -142,6 +147,8 @@ export type AnalyticsSnapshot = {
     averageRating: number;
     activeProducts: number;
     averageOrderValue: number;
+    averageDeliveryTimeDays: number;
+    averagePaymentProcessingHours: number;
     pendingRevenue: number;
     completionRate: number;
     integrationHealth: number;

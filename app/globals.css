@@ -977,6 +977,56 @@ span.trend-neutral {
   color: var(--accent);
 }
 
+.report-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--panel);
+}
+
+.report-actions .eyebrow {
+  margin-bottom: 8px;
+}
+
+.report-actions h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  color: var(--ink);
+  font-size: 1.35rem;
+}
+
+.report-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.report-buttons a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.report-buttons a:hover {
+  border-color: rgba(111, 127, 109, 0.4);
+}
+
 .chart {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(58px, 92px));
@@ -1193,7 +1243,7 @@ span.trend-neutral {
 
 .funnel {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
   gap: 18px;
 }
 
@@ -1207,13 +1257,7 @@ span.trend-neutral {
 }
 
 .funnel-step:not(:last-child)::after {
-  position: absolute;
-  top: 50%;
-  right: -18px;
-  width: 18px;
-  height: 1px;
-  background: var(--accent);
-  content: "";
+  display: none;
 }
 
 .funnel-topline,
@@ -1245,6 +1289,9 @@ span.trend-neutral {
 .funnel-step strong {
   display: block;
   margin-bottom: 10px;
+  font-size: 1rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .funnel-step p {
@@ -1916,12 +1963,18 @@ tr:last-child td {
   .panel-heading,
   .detail-heading,
   .chat-heading,
+  .report-actions,
   .detail-row,
   .ranked-copy,
   .horizontal-label {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .report-buttons {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .ranked-row {

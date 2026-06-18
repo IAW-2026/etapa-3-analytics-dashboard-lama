@@ -89,7 +89,8 @@ function normalizeShipment(value: unknown): Shipment | null {
     codigo_seguimiento: asString(shipment.codigo_seguimiento),
     empresa_logistica: asString(logistic?.nombre, asString(shipment.logistico_id, "Sin operador")),
     estado: mapShippingStatus(asString(shipment.estado_actual, "pending")),
-    fecha_actualizacion: asString(shipment.fecha_actualizacion, asString(shipment.fecha_creacion))
+    fecha_actualizacion: asString(shipment.fecha_actualizacion, asString(shipment.fecha_creacion)),
+    fecha_entrega: asString(shipment.fecha_entrega, asString(shipment.fechaEntrega, asString(shipment.delivered_at))) || undefined
   };
 }
 

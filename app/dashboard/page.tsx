@@ -4,12 +4,15 @@ import {
   AppChrome,
   DetailCard,
   formatCurrency,
+  formatDurationDays,
+  formatDurationHours,
   Funnel,
   getMetric,
   Icon,
   KpiCard,
   numberFormatter,
   OperationalAlertsPanel,
+  ReportExportActions,
   SystemFlowPanel,
   TemporalChart,
   TopProductsPanel,
@@ -54,6 +57,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <p>Resumen visual de ordenes, usuarios, ingresos, productos, pagos, envios y calificaciones.</p>
       </section>
 
+      <ReportExportActions timeRangeId={snapshot.timeRange.id} />
+
       <section className="kpi-grid" aria-label="Indicadores principales">
         <KpiCard
           badge="Aprobado"
@@ -86,6 +91,38 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           label="Calificacion promedio"
           trend={snapshot.trends.kpis.averageRating}
           value={snapshot.kpis.averageRating.toFixed(1)}
+        />
+        <KpiCard
+          badge="Ticket"
+          detail="Sobre pagos aprobados"
+          icon="wallet"
+          label="Ticket promedio"
+          trend={snapshot.trends.kpis.averageOrderValue}
+          value={formatCurrency(snapshot.kpis.averageOrderValue)}
+        />
+        <KpiCard
+          badge="Conversion"
+          detail="Completadas sobre ordenes creadas"
+          icon="trending"
+          label="Tasa de conversion"
+          trend={snapshot.trends.kpis.completionRate}
+          value={`${snapshot.kpis.completionRate}%`}
+        />
+        <KpiCard
+          badge="Logistica"
+          detail="Desde creacion hasta entrega"
+          icon="truck"
+          label="Tiempo promedio de entrega"
+          trend={snapshot.trends.kpis.averageDeliveryTimeDays}
+          value={formatDurationDays(snapshot.kpis.averageDeliveryTimeDays)}
+        />
+        <KpiCard
+          badge="Payments"
+          detail="Desde orden hasta aprobacion"
+          icon="credit"
+          label="Tiempo procesamiento pago"
+          trend={snapshot.trends.kpis.averagePaymentProcessingHours}
+          value={formatDurationHours(snapshot.kpis.averagePaymentProcessingHours)}
         />
       </section>
 
