@@ -156,6 +156,8 @@ export type AnalyticsSnapshot = {
   buyerPreferencesByCategory: Array<{ label: string; value: number }>;
   buyerPreferencesBySize: Array<{ label: string; value: number }>;
   buyerPreferencesBySeller: Array<{ label: string; value: number }>;
+  salesByDay: Array<{ label: string; orders: number; revenue: number }>;
+  salesByHour: Array<{ label: string; orders: number; revenue: number }>;
   orderFunnel: Array<{ label: string; value: number; detail: string }>;
   operationalAlerts: Array<{
     id: string;
@@ -172,4 +174,30 @@ export type AnalyticsSnapshot = {
   topProducts: Array<{ productId: string; title: string; units: number; revenue: number }>;
   recentOrders: Order[];
   dataSources: Array<{ name: string; status: "mock" | "connected" | "error"; detail: string }>;
+};
+
+export type IntelligentInsight = {
+  title: string;
+  detail: string;
+  tone: "positive" | "warning" | "neutral";
+};
+
+export type AiInsights = {
+  source: "gemini" | "local";
+  summary: string;
+  bestSalesDay: {
+    day: string;
+    orders: number;
+    revenue: number;
+  };
+  bestSalesHour: {
+    label: string;
+    orders: number;
+    revenue: number;
+  };
+  monthlyProjection: {
+    projectedRevenue: number;
+    averageDailyRevenue: number;
+  };
+  recommendations: IntelligentInsight[];
 };

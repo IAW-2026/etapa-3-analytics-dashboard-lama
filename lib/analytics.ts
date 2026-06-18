@@ -26,6 +26,7 @@ import type {
 } from "./types";
 
 const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "short" });
+const weekdayFormatter = new Intl.DateTimeFormat("es-AR", { weekday: "long" });
 
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
@@ -53,6 +54,51 @@ function getMonthLabel(date: string) {
   }
 
   return monthFormatter.format(parsedDate).replace(".", "");
+}
+
+function getWeekdayLabel(date: string) {
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "sin fecha";
+  }
+
+  return weekdayFormatter.format(parsedDate);
+}
+
+function getHourBucket(date: string) {
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "sin horario";
+  }
+
+  const start = Math.floor(parsedDate.getHours() / 3) * 3;
+  const end = start + 3;
+
+  return `${String(start).padStart(2, "0")}:00-${String(end).padStart(2, "0")}:00`;
+}
+
+function buildSalesPattern(payments: Payment[], getLabel: (date: string) => string) {
+  const pattern = payments
+    .filter((payment) => payment.estado === "aprobado")
+    .reduce<Record<string, { label: string; orders: number; revenue: number }>>((accumulator, payment) => {
+      const label = getLabel(payment.fecha_creacion);
+      const current = accumulator[label] ?? { label, orders: 0, revenue: 0 };
+
+      return {
+        ...accumulator,
+        [label]: {
+          label,
+          orders: current.orders + 1,
+          revenue: current.revenue + payment.monto_total
+        }
+      };
+    }, {});
+
+  return Object.values(pattern).sort(
+    (first, second) => second.orders - first.orders || second.revenue - first.revenue
+  );
 }
 
 function buildRevenueByMonth(payments: typeof mockPayments) {
@@ -501,6 +547,8 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
       filteredBuyerPreferences,
       (preference) => preference.vendedores_preferidos
     ),
+    salesByDay: buildSalesPattern(filteredPayments, getWeekdayLabel),
+    salesByHour: buildSalesPattern(filteredPayments, getHourBucket),
     orderFunnel: buildOrderFunnel(filteredOrders),
     operationalAlerts: buildOperationalAlerts(filteredOrders, filteredPayments, filteredShipments),
     topProducts: buildTopProducts(products, filteredOrders),

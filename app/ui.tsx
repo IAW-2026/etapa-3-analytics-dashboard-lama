@@ -25,6 +25,7 @@ export type IconName =
   | "minus"
   | "package"
   | "refresh"
+  | "sparkles"
   | "star"
   | "truck"
   | "trending"
@@ -41,6 +42,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: "/", icon: "home", id: "inicio", label: "Inicio" },
   { href: "/dashboard", icon: "activity", id: "dashboard", label: "Dashboard" },
+  { href: "/insights", icon: "sparkles", id: "insights", label: "Insights IA" },
   { href: "/ordenes", icon: "bag", id: "ordenes", label: "Ordenes" },
   { href: "/pagos", icon: "credit", id: "pagos", label: "Pagos" },
   { href: "/productos", icon: "package", id: "productos", label: "Productos" },
@@ -203,6 +205,13 @@ export function Icon({ name }: { name: IconName }) {
         ) : null}
         {name === "star" ? (
           <path d="m12 4 2.2 4.7 5.1.7-3.8 3.6.9 5.1-4.4-2.5-4.4 2.5.9-5.1-3.8-3.6 5.1-.7L12 4Z" />
+        ) : null}
+        {name === "sparkles" ? (
+          <>
+            <path d="M12 3 13.6 8.4 19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3Z" />
+            <path d="M19 15 19.8 17.2 22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z" />
+            <path d="M5 14 5.6 15.4 7 16l-1.4.6L5 18l-.6-1.4L3 16l1.4-.6L5 14Z" />
+          </>
         ) : null}
         {name === "truck" ? (
           <>
