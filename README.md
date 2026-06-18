@@ -18,6 +18,8 @@ Herramienta de lectura y analisis que consolida metricas del sistema LAMA comple
 - Embudo operativo de ordenes creadas, pagadas, enviadas y finalizadas.
 - Alertas operativas accionables para pagos pendientes/rechazados y ordenes pagadas sin envio, con links al recurso afectado.
 - Indicador de salud de integraciones segun fuentes conectadas, mockeadas o con error.
+- Seccion `Insights IA` con mejor dia de venta, mejor franja horaria, proyeccion mensual y recomendaciones automaticas.
+- Integracion opcional con Gemini para generar resumen ejecutivo; si no hay `GEMINI_API_KEY`, usa analisis local.
 - API interna `GET /api/analytics/summary` para centralizar la consolidacion de datos.
 - Panel de fuentes de datos que indica que integraciones siguen en modo mock.
 - Integracion inicial con `GET /api/productos` y `GET /api/ordenes-ventas` de Seller App, con fallback a mock si la API responde error.
@@ -76,6 +78,9 @@ NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
 NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.1-flash-lite
 
 SELLER_API_BASE_URL=https://proyecto-c-seller-lama.vercel.app
 ANALYTICS_SERVICE_NAME=analytics

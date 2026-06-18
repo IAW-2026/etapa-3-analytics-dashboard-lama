@@ -457,6 +457,14 @@ h3 {
   background: var(--accent);
 }
 
+.mini-track {
+  background: rgba(55, 65, 61, 0.18);
+}
+
+:root[data-theme="dark"] .mini-track {
+  background: rgba(246, 241, 231, 0.18);
+}
+
 .module-grid,
 .kpi-grid {
   display: grid;
@@ -556,6 +564,268 @@ h3 {
   min-height: 220px;
   flex-direction: column;
   align-items: flex-start;
+}
+
+.ai-summary-panel {
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(143, 161, 141, 0.22), transparent 32%),
+    var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.ai-summary-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.ai-summary-heading h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3.4rem);
+}
+
+.ai-summary-heading > span {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ai-summary-panel > p {
+  max-width: 920px;
+  margin: 0;
+  color: rgba(55, 65, 61, 0.82);
+  font-size: 1.08rem;
+  line-height: 1.8;
+}
+
+:root[data-theme="dark"] .ai-summary-panel > p {
+  color: rgba(246, 241, 231, 0.78);
+}
+
+.card-icon.static {
+  position: static;
+}
+
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recommendation-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(246, 241, 231, 0.36);
+}
+
+.recommendation-card span {
+  display: inline-flex;
+  margin-bottom: 14px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.recommendation-card strong {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.recommendation-card p {
+  margin-bottom: 0;
+  color: rgba(55, 65, 61, 0.72);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+:root[data-theme="dark"] .recommendation-card p {
+  color: rgba(246, 241, 231, 0.72);
+}
+
+.recommendation-positive {
+  border-color: rgba(88, 117, 95, 0.28);
+}
+
+.recommendation-warning {
+  border-color: rgba(154, 90, 80, 0.28);
+}
+
+.chat-panel {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(143, 161, 141, 0.16), transparent 34%),
+    var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.chat-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.chat-heading h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 1.7rem;
+}
+
+.chat-heading span {
+  color: rgba(55, 65, 61, 0.68);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+:root[data-theme="dark"] .chat-heading span {
+  color: rgba(246, 241, 231, 0.72);
+}
+
+.chat-heading b {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.chat-window {
+  display: grid;
+  max-height: 420px;
+  overflow-y: auto;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(246, 241, 231, 0.28);
+}
+
+.chat-message {
+  display: grid;
+  width: min(88%, 720px);
+  gap: 7px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.chat-message span {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.chat-message p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.chat-message.assistant {
+  justify-self: start;
+  background: rgba(246, 241, 231, 0.46);
+}
+
+.chat-message.user {
+  justify-self: end;
+  border-color: rgba(111, 127, 109, 0.28);
+  background: var(--soft);
+}
+
+.chat-message.loading p {
+  opacity: 0.72;
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chat-suggestions button,
+.chat-form button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.chat-suggestions button {
+  padding: 9px 12px;
+}
+
+.chat-suggestions button:hover,
+.chat-form button:hover {
+  border-color: rgba(111, 127, 109, 0.42);
+  transform: translateY(-1px);
+}
+
+.chat-suggestions button:disabled,
+.chat-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.chat-form input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(246, 241, 231, 0.42);
+  color: var(--ink);
+  outline: 0;
+  padding: 0 16px;
+}
+
+.chat-form input:focus {
+  border-color: rgba(111, 127, 109, 0.48);
+}
+
+.chat-form button {
+  min-height: 46px;
+  padding: 0 18px;
 }
 
 .module-card > .trend-badge,
@@ -1204,8 +1474,9 @@ span.trend-neutral {
 }
 
 .detail-row span {
-  color: rgba(55, 65, 61, 0.72);
-  font-size: 0.92rem;
+  color: var(--ink);
+  font-size: 0.96rem;
+  font-weight: 850;
 }
 
 .detail-row strong {
@@ -1476,6 +1747,7 @@ tr:last-child td {
   .ranking-grid,
   .detail-grid,
   .table-grid,
+  .ai-summary-heading,
   .auth-shell {
     grid-template-columns: 1fr;
   }
@@ -1483,7 +1755,8 @@ tr:last-child td {
   .module-grid,
   .kpi-grid,
   .funnel,
-  .system-flow {
+  .system-flow,
+  .recommendation-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1532,7 +1805,8 @@ tr:last-child td {
   .system-flow,
   .alert-list,
   .alert-list.operational,
-  .source-list {
+  .source-list,
+  .recommendation-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1552,6 +1826,7 @@ tr:last-child td {
 
   .panel-heading,
   .detail-heading,
+  .chat-heading,
   .detail-row,
   .ranked-copy,
   .horizontal-label {
@@ -1582,5 +1857,13 @@ tr:last-child td {
 
   .bar-track {
     height: 200px;
+  }
+
+  .chat-message {
+    width: 100%;
+  }
+
+  .chat-form {
+    grid-template-columns: 1fr;
   }
 }
