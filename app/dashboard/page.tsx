@@ -54,7 +54,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <section className="page-hero compact">
         <p className="eyebrow">Sistema LAMA</p>
         <h1>Dashboard operativo</h1>
-        <p>Resumen visual de ordenes, usuarios, ingresos, productos, pagos, envios y calificaciones.</p>
+        <p>Resumen visual de ordenes, usuarios, ingresos, productos, pagos y envios.</p>
       </section>
 
       <ReportExportActions timeRangeId={snapshot.timeRange.id} />
@@ -83,14 +83,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           label="Pedidos completados"
           trend={snapshot.trends.kpis.completedOrders}
           value={numberFormatter.format(snapshot.kpis.completedOrders)}
-        />
-        <KpiCard
-          badge="Reviews"
-          detail="Sobre reviews disponibles"
-          icon="star"
-          label="Calificacion promedio"
-          trend={snapshot.trends.kpis.averageRating}
-          value={snapshot.kpis.averageRating.toFixed(1)}
         />
         <KpiCard
           badge="Ticket"
