@@ -31,7 +31,7 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
           trend={snapshot.trends.kpis.totalShipments}
           value={numberFormatter.format(totalShipments)}
         />
-        {snapshot.shipmentsByStatus.slice(0, 2).map((item) => (
+        {snapshot.shipmentsByStatus.map((item) => (
           <MetricPanel
             detail="Estado reportado"
             key={item.label}

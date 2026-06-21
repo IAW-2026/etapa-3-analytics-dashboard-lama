@@ -64,6 +64,10 @@ function mapShippingStatus(status: string): Shipment["estado"] {
     return "in_transit";
   }
 
+  if (normalizedStatus === "cancelado" || normalizedStatus === "cancelled") {
+    return "cancelled";
+  }
+
   return "pending";
 }
 
