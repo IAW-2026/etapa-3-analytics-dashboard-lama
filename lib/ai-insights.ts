@@ -1,5 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
-
+import { generateGeminiText } from "@/lib/gemini";
 import type { AiInsights, AnalyticsSnapshot, IntelligentInsight } from "@/lib/types";
 
 function formatCurrency(value: number) {
@@ -137,34 +136,22 @@ export async function getAiInsights(snapshot: AnalyticsSnapshot): Promise<AiInsi
   };
   const localSummary = buildLocalSummary(snapshot, localInsights);
 
-  if (!process.env.GEMINI_API_KEY) {
-    return {
-      source: "local",
-      summary: localSummary,
-      ...localInsights
-    };
-  }
+  const generatedSummary = await generateGeminiText({
+    prompt: buildAiPrompt(snapshot, localInsights),
+    temperature: 0.2
+  });
 
-  try {
-    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model: process.env.GEMINI_MODEL ?? "gemini-3.1-flash-lite",
-      contents: buildAiPrompt(snapshot, localInsights),
-      config: {
-        temperature: 0.2
-      }
-    });
-
+  if (generatedSummary) {
     return {
       source: "gemini",
-      summary: cleanGeneratedText(response.text || localSummary),
-      ...localInsights
-    };
-  } catch {
-    return {
-      source: "local",
-      summary: localSummary,
+      summary: cleanGeneratedText(generatedSummary),
       ...localInsights
     };
   }
+
+  return {
+    source: "local",
+    summary: localSummary,
+    ...localInsights
+  };
 }
