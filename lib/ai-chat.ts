@@ -1,5 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
-
+import { generateGeminiText } from "@/lib/gemini";
 import type { AnalyticsSnapshot } from "@/lib/types";
 
 const allowedTerms = [
@@ -158,22 +157,11 @@ export async function answerAnalyticsQuestion(question: string, snapshot: Analyt
     return outOfScopeMessage;
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    return buildLocalAnswer(trimmedQuestion, snapshot);
-  }
+  const localAnswer = buildLocalAnswer(trimmedQuestion, snapshot);
+  const generatedAnswer = await generateGeminiText({
+    prompt: buildPrompt(trimmedQuestion, snapshot),
+    temperature: 0.1
+  });
 
-  try {
-    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model: process.env.GEMINI_MODEL ?? "gemini-3.1-flash-lite",
-      contents: buildPrompt(trimmedQuestion, snapshot),
-      config: {
-        temperature: 0.1
-      }
-    });
-
-    return cleanGeneratedText(response.text || buildLocalAnswer(trimmedQuestion, snapshot));
-  } catch {
-    return buildLocalAnswer(trimmedQuestion, snapshot);
-  }
+  return generatedAnswer ? cleanGeneratedText(generatedAnswer) : localAnswer;
 }
