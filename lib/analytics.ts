@@ -127,7 +127,7 @@ function buildRevenueByMonth(payments: typeof mockPayments) {
 }
 
 function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
-  const productStats = new Map<string, { productId: string; title: string; units: number; revenue: number }>();
+  const productStats = new Map<string, { productId: string; title: string; units: number; revenue: number; price: number }>();
 
   orders
     .filter((order) => order.estado_pago === "aprobado")
@@ -135,23 +135,26 @@ function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
       order.producto_ids.forEach((productId) => {
         const product = products.find((item) => item.producto_id === productId);
         const orderItem = order.items?.find((item) => item.producto_id === productId);
+        const price = product?.precio ?? orderItem?.precio_unitario ?? 0;
         const current = productStats.get(productId) ?? {
           productId,
           title: product?.titulo ?? orderItem?.titulo ?? `Producto ${productId.slice(0, 8)}`,
           units: 0,
-          revenue: 0
+          revenue: 0,
+          price
         };
 
         productStats.set(productId, {
           ...current,
           units: current.units + 1,
-          revenue: current.revenue + (product?.precio ?? orderItem?.precio_unitario ?? 0)
+          revenue: current.revenue + price,
+          price
         });
       });
     });
 
   return Array.from(productStats.values())
-    .sort((first, second) => second.units - first.units || second.revenue - first.revenue)
+    .sort((first, second) => second.price - first.price)
     .slice(0, 5);
 }
 

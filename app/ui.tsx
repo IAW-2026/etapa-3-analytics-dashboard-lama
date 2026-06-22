@@ -686,15 +686,15 @@ export function DetailCard({
 }
 
 export function TopProductsPanel({
-  detail = "Ordenados por unidades vendidas",
+  detail = "Ordenados por precio, de mayor a menor",
   products,
   title = "Top productos mas vendidos"
 }: {
   detail?: string;
-  products: Array<{ productId: string; title: string; units: number; revenue: number }>;
+  products: Array<{ productId: string; title: string; units: number; revenue: number; price: number }>;
   title?: string;
 }) {
-  const maxUnits = Math.max(...products.map((product) => product.units), 1);
+  const maxPrice = Math.max(...products.map((product) => product.price), 1);
 
   return (
     <section className="panel">
@@ -720,10 +720,10 @@ export function TopProductsPanel({
                   <span>{numberFormatter.format(product.units)} unidades vendidas</span>
                 </div>
                 <div className="ranked-track">
-                  <div style={{ width: `${Math.max((product.units / maxUnits) * 100, 8)}%` }} />
+                  <div style={{ width: `${Math.max((product.price / maxPrice) * 100, 8)}%` }} />
                 </div>
               </div>
-              <strong className="ranked-value">{formatCurrency(product.revenue)}</strong>
+              <strong className="ranked-value">{formatCurrency(product.price)}</strong>
             </article>
           ))}
         </div>
