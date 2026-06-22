@@ -6,7 +6,7 @@ Es una webapp de lectura y analisis que presenta metricas y reportes sobre el si
 
 La app se conecta a las APIs de Buyer, Seller, Payments y Shipping para obtener datos en tiempo real sobre ventas, ordenes, pagos, envios, productos y vendedores. Luego procesa esta informacion para generar indicadores clave del negocio, visualizaciones y reportes exportables. Ademas, incluye un modulo de Insights IA que utiliza modelos de lenguaje para generar resmenes automaticos y recomendaciones basadas en los datos.
 
-Link a la webapp: 
+Link a la webapp: https://etapa-3-analytics-dashboard-lama.vercel.app/
 
 ## Webapps consultadas
 
