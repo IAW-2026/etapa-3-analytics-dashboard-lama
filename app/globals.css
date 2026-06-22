@@ -1817,7 +1817,6 @@ tr:last-child td {
   background: var(--accent);
 }
 
-.source-mock,
 .source-error {
   background: var(--ink);
 }

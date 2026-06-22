@@ -10,7 +10,7 @@ type SellerOrdersResponse = {
 
 export type DataSourceStatus = {
   name: string;
-  status: "mock" | "connected" | "error";
+  status: "connected" | "error";
   detail: string;
 };
 
@@ -198,7 +198,7 @@ function normalizeOrdersResponse(payload: unknown) {
   return items.map(normalizeOrder).filter((order): order is Order => Boolean(order));
 }
 
-export async function fetchSellerProducts(fallbackProducts: Product[]): Promise<ProductsResult> {
+export async function fetchSellerProducts(): Promise<ProductsResult> {
   const url = getSellerUrl("/api/productos");
 
   try {
@@ -209,11 +209,11 @@ export async function fetchSellerProducts(fallbackProducts: Product[]): Promise<
 
     if (!response.ok) {
       return {
-        products: fallbackProducts,
+        products: [],
         source: {
           name: "Seller App",
           status: "error",
-          detail: `No se pudieron traer productos reales (${response.status}). Se usan mocks temporales.`
+          detail: `No se pudieron traer productos reales (${response.status}).`
         }
       };
     }
@@ -222,29 +222,29 @@ export async function fetchSellerProducts(fallbackProducts: Product[]): Promise<
     const products = normalizeProductsResponse(payload);
 
     return {
-      products: products.length > 0 ? products : fallbackProducts,
+      products,
       source: {
         name: "Seller App",
-        status: products.length > 0 ? "connected" : "mock",
+        status: "connected",
         detail:
           products.length > 0
             ? `Productos reales obtenidos desde ${url}.`
-            : "Seller respondio sin items; se usan mocks temporales."
+            : `Seller respondio sin items desde ${url}.`
       }
     };
   } catch {
     return {
-      products: fallbackProducts,
+      products: [],
       source: {
         name: "Seller App",
         status: "error",
-        detail: "No se pudo conectar con Seller. Se usan mocks temporales."
+        detail: "No se pudo conectar con Seller."
       }
     };
   }
 }
 
-export async function fetchSellerOrders(fallbackOrders: Order[]): Promise<OrdersResult> {
+export async function fetchSellerOrders(): Promise<OrdersResult> {
   const url = getSellerUrl("/api/ordenes-ventas");
 
   try {
@@ -255,11 +255,11 @@ export async function fetchSellerOrders(fallbackOrders: Order[]): Promise<Orders
 
     if (!response.ok) {
       return {
-        orders: fallbackOrders,
+        orders: [],
         source: {
           name: "Seller Ordenes",
           status: "error",
-          detail: `No se pudieron traer ordenes reales (${response.status}). Se usan mocks temporales.`
+          detail: `No se pudieron traer ordenes reales (${response.status}).`
         }
       };
     }
@@ -268,23 +268,23 @@ export async function fetchSellerOrders(fallbackOrders: Order[]): Promise<Orders
     const orders = normalizeOrdersResponse(payload);
 
     return {
-      orders: orders.length > 0 ? orders : fallbackOrders,
+      orders,
       source: {
         name: "Seller Ordenes",
-        status: orders.length > 0 ? "connected" : "mock",
+        status: "connected",
         detail:
           orders.length > 0
             ? `Ordenes reales obtenidas desde ${url}.`
-            : "Seller respondio sin ordenes; se usan mocks temporales."
+            : `Seller respondio sin ordenes desde ${url}.`
       }
     };
   } catch {
     return {
-      orders: fallbackOrders,
+      orders: [],
       source: {
         name: "Seller Ordenes",
         status: "error",
-        detail: "No se pudo conectar con ordenes de Seller. Se usan mocks temporales."
+        detail: "No se pudo conectar con ordenes de Seller."
       }
     };
   }

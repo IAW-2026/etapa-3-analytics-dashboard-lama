@@ -84,7 +84,7 @@ function normalizePaymentsResponse(payload: unknown) {
   return rawItems.map(normalizePayment).filter((payment): payment is Payment => Boolean(payment));
 }
 
-export async function fetchPayments(fallbackPayments: Payment[]): Promise<PaymentsResult> {
+export async function fetchPayments(): Promise<PaymentsResult> {
   const url = getPaymentsUrl();
 
   try {
@@ -95,11 +95,11 @@ export async function fetchPayments(fallbackPayments: Payment[]): Promise<Paymen
 
     if (!response.ok) {
       return {
-        payments: fallbackPayments,
+        payments: [],
         source: {
           name: "Payments App",
           status: "error",
-          detail: `No se pudieron traer pagos reales (${response.status}). Se usan mocks temporales.`
+          detail: `No se pudieron traer pagos reales (${response.status}).`
         }
       };
     }
@@ -108,23 +108,23 @@ export async function fetchPayments(fallbackPayments: Payment[]): Promise<Paymen
     const payments = normalizePaymentsResponse(payload);
 
     return {
-      payments: payments.length > 0 ? payments : fallbackPayments,
+      payments,
       source: {
         name: "Payments App",
-        status: payments.length > 0 ? "connected" : "mock",
+        status: "connected",
         detail:
           payments.length > 0
             ? `Pagos reales obtenidos desde ${url}.`
-            : "Payments respondio sin pagos; se usan mocks temporales."
+            : `Payments respondio sin pagos desde ${url}.`
       }
     };
   } catch {
     return {
-      payments: fallbackPayments,
+      payments: [],
       source: {
         name: "Payments App",
         status: "error",
-        detail: "No se pudo conectar con Payments. Se usan mocks temporales."
+        detail: "No se pudo conectar con Payments."
       }
     };
   }

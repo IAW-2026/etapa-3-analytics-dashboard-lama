@@ -248,10 +248,7 @@ function normalizeBuyersResponse(payload: unknown) {
   };
 }
 
-export async function fetchBuyerCustomers(
-  fallbackBuyers: Buyer[],
-  fallbackPreferences: BuyerPreference[]
-): Promise<BuyersResult> {
+export async function fetchBuyerCustomers(): Promise<BuyersResult> {
   const customersUrl = getCustomersUrl();
 
   try {
@@ -262,15 +259,15 @@ export async function fetchBuyerCustomers(
 
     if (!response.ok) {
       return {
-        buyers: fallbackBuyers,
-        preferences: fallbackPreferences,
-        totalBuyers: fallbackBuyers.length,
+        buyers: [],
+        preferences: [],
+        totalBuyers: 0,
         page: 1,
-        pageSize: fallbackBuyers.length,
+        pageSize: 0,
         source: {
           name: "Buyer App",
           status: "error",
-          detail: `No se pudieron traer compradores reales (${response.status}). Se usan mocks temporales.`
+          detail: `No se pudieron traer compradores reales (${response.status}).`
         }
       };
     }
@@ -282,15 +279,15 @@ export async function fetchBuyerCustomers(
 
     if (!hasUsableBuyerData) {
       return {
-        buyers: fallbackBuyers,
-        preferences: fallbackPreferences,
-        totalBuyers: fallbackBuyers.length,
+        buyers: [],
+        preferences: [],
+        totalBuyers: 0,
         page: 1,
-        pageSize: fallbackBuyers.length,
+        pageSize: 0,
         source: {
           name: "Buyer App",
-          status: "mock",
-          detail: "Buyer respondio sin compradores validos; se usan mocks temporales."
+          status: "error",
+          detail: "Buyer respondio sin compradores validos."
         }
       };
     }
@@ -309,15 +306,15 @@ export async function fetchBuyerCustomers(
     };
   } catch {
     return {
-      buyers: fallbackBuyers,
-      preferences: fallbackPreferences,
-      totalBuyers: fallbackBuyers.length,
+      buyers: [],
+      preferences: [],
+      totalBuyers: 0,
       page: 1,
-      pageSize: fallbackBuyers.length,
+      pageSize: 0,
       source: {
         name: "Buyer App",
         status: "error",
-        detail: "No se pudo conectar con Buyer. Se usan mocks temporales."
+        detail: "No se pudo conectar con Buyer."
       }
     };
   }

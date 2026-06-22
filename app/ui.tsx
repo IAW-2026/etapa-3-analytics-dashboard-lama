@@ -120,7 +120,6 @@ export function formatLabel(label: string) {
     finalizada: "Finalizadas",
     in_transit: "In Transit",
     liquidada: "Liquidadas",
-    mock: "Mock",
     pagada: "Pagadas",
     pendiente: "Pendientes",
     pendiente_pago: "Pendiente pago",
