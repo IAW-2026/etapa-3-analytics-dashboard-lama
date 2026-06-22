@@ -2,15 +2,6 @@ import { fetchBuyerCustomers } from "./api/buyer";
 import { fetchPayments } from "./api/payments";
 import { fetchSellerOrders, fetchSellerProducts } from "./api/seller";
 import { fetchShippingShipments } from "./api/shipping";
-import {
-  buyerPreferences as mockBuyerPreferences,
-  buyers as mockBuyers,
-  orders as mockOrders,
-  payments as mockPayments,
-  products as mockProducts,
-  reviews,
-  shipments as mockShipments
-} from "./mock-data";
 import { DEFAULT_TIME_RANGE_ID, resolveTimeRange } from "./time-range";
 import type {
   AnalyticsSnapshot,
@@ -106,7 +97,7 @@ function buildSalesPattern(payments: Payment[], getLabel: (date: string) => stri
   );
 }
 
-function buildRevenueByMonth(payments: typeof mockPayments) {
+function buildRevenueByMonth(payments: Payment[]) {
   const monthly = payments
     .filter((payment) => payment.estado === "aprobado")
     .reduce<Record<string, { label: string; revenue: number; orders: number }>>((accumulator, payment) => {
@@ -126,7 +117,7 @@ function buildRevenueByMonth(payments: typeof mockPayments) {
   return Object.values(monthly);
 }
 
-function buildTopProducts(products: typeof mockProducts, orders: Order[]) {
+function buildTopProducts(products: Product[], orders: Order[]) {
   const productStats = new Map<string, { productId: string; title: string; units: number; revenue: number; price: number }>();
 
   orders
@@ -490,8 +481,6 @@ function buildTrends({
   const previousApprovedPayments = previousPayments.filter((payment) => payment.estado === "aprobado");
   const currentPendingPayments = currentPayments.filter((payment) => payment.estado === "pendiente");
   const previousPendingPayments = previousPayments.filter((payment) => payment.estado === "pendiente");
-  const currentReviews = filterByRange(reviews, (review) => review.fecha_creacion, timeRange);
-  const previousReviews = filterByPreviousRange(reviews, (review) => review.fecha_creacion, timeRange);
   const currentShipments = filterByRange(shipments, (shipment) => shipment.fecha_actualizacion, timeRange);
   const previousShipments = filterByPreviousRange(shipments, (shipment) => shipment.fecha_actualizacion, timeRange);
   const currentProducts = filterByRange(products, (product) => product.fecha_creacion, timeRange);
@@ -528,10 +517,7 @@ function buildTrends({
         getAveragePaymentProcessingHours(previousOrders, previousPayments),
         "lower"
       ),
-      averageRating: buildTrend(
-        average(currentReviews.map((review) => review.calificacion)),
-        average(previousReviews.map((review) => review.calificacion))
-      ),
+      averageRating: buildTrend(0, 0),
       completedOrders: buildTrend(
         currentOrders.filter(isCompletedOrder).length,
         previousOrders.filter(isCompletedOrder).length
@@ -788,13 +774,13 @@ function buildOperationalAlerts(orders: Order[], payments: Payment[], shipments:
 
 export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TIME_RANGE_ID): Promise<AnalyticsSnapshot> {
   const [sellerProducts, sellerOrders, buyerCustomers] = await Promise.all([
-    fetchSellerProducts(mockProducts),
-    fetchSellerOrders(mockOrders),
-    fetchBuyerCustomers(mockBuyers, mockBuyerPreferences)
+    fetchSellerProducts(),
+    fetchSellerOrders(),
+    fetchBuyerCustomers()
   ]);
   const [shippingShipments, paymentsResult] = await Promise.all([
-    fetchShippingShipments(mockShipments),
-    fetchPayments(mockPayments)
+    fetchShippingShipments(),
+    fetchPayments()
   ]);
   const products = sellerProducts.products;
   const orders = sellerOrders.orders;
@@ -806,7 +792,6 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
     ...orders.map((order) => order.fecha_creacion),
     ...payments.map((payment) => payment.fecha_creacion),
     ...products.map((product) => product.fecha_creacion),
-    ...reviews.map((review) => review.fecha_creacion),
     ...shipments.map((shipment) => shipment.fecha_actualizacion)
   ]);
   const filteredBuyers = filterByRange(buyerCustomers.buyers, (buyer) => buyer.fecha_creacion, timeRange);
@@ -818,13 +803,11 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
   const filteredOrders = filterByRange(orders, (order) => order.fecha_creacion, timeRange);
   const filteredPayments = filterByRange(payments, (payment) => payment.fecha_creacion, timeRange);
   const filteredShipments = filterByRange(shipments, (shipment) => shipment.fecha_actualizacion, timeRange);
-  const filteredReviews = filterByRange(reviews, (review) => review.fecha_creacion, timeRange);
   const approvedPayments = filteredPayments.filter((payment) => payment.estado === "aprobado");
   const pendingPayments = filteredPayments.filter((payment) => payment.estado === "pendiente");
   const completedOrders = filteredOrders.filter(isCompletedOrder);
   const activeUsers = filteredBuyers.length;
-  const averageRating =
-    filteredReviews.length > 0 ? sum(filteredReviews.map((review) => review.calificacion)) / filteredReviews.length : 0;
+  const averageRating = 0;
   const orderStatusCounts = countBy(filteredOrders.map((order) => order.estado_general));
   const paymentStatusCounts = countBy(filteredPayments.map((payment) => payment.estado));
   const shipmentStatusCounts = countBy(filteredShipments.map((shipment) => shipment.estado));

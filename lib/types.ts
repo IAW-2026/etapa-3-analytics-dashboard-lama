@@ -213,7 +213,7 @@ export type AnalyticsSnapshot = {
   topProducts: Array<{ productId: string; title: string; units: number; revenue: number; price: number }>;
   topSellers: Array<{ sellerId: string; sales: number; revenue: number }>;
   recentOrders: Order[];
-  dataSources: Array<{ name: string; status: "mock" | "connected" | "error"; detail: string }>;
+  dataSources: Array<{ name: string; status: "connected" | "error"; detail: string }>;
 };
 
 export type IntelligentInsight = {

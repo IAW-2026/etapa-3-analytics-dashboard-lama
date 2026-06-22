@@ -106,7 +106,7 @@ function normalizeShipmentsResponse(payload: unknown) {
   return items.map(normalizeShipment).filter((shipment): shipment is Shipment => Boolean(shipment));
 }
 
-export async function fetchShippingShipments(fallbackShipments: Shipment[]): Promise<ShipmentsResult> {
+export async function fetchShippingShipments(): Promise<ShipmentsResult> {
   const url = getShippingUrl();
 
   try {
@@ -117,11 +117,11 @@ export async function fetchShippingShipments(fallbackShipments: Shipment[]): Pro
 
     if (!response.ok) {
       return {
-        shipments: fallbackShipments,
+        shipments: [],
         source: {
           name: "Shipping App",
           status: "error",
-          detail: `No se pudieron traer envios reales (${response.status}). Se usan mocks temporales.`
+          detail: `No se pudieron traer envios reales (${response.status}).`
         }
       };
     }
@@ -130,23 +130,23 @@ export async function fetchShippingShipments(fallbackShipments: Shipment[]): Pro
     const shipments = normalizeShipmentsResponse(payload);
 
     return {
-      shipments: shipments.length > 0 ? shipments : fallbackShipments,
+      shipments,
       source: {
         name: "Shipping App",
-        status: shipments.length > 0 ? "connected" : "mock",
+        status: "connected",
         detail:
           shipments.length > 0
             ? `Envios reales obtenidos desde ${url}.`
-            : "Shipping respondio sin envios; se usan mocks temporales."
+            : `Shipping respondio sin envios desde ${url}.`
       }
     };
   } catch {
     return {
-      shipments: fallbackShipments,
+      shipments: [],
       source: {
         name: "Shipping App",
         status: "error",
-        detail: "No se pudo conectar con Shipping. Se usan mocks temporales."
+        detail: "No se pudo conectar con Shipping."
       }
     };
   }

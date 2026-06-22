@@ -98,7 +98,7 @@ export default async function Home({ searchParams }: PageProps) {
           value={numberFormatter.format(snapshot.kpis.activeUsers)}
         />
         <ModuleCard
-          detail="APIs conectadas y fallback"
+          detail="APIs conectadas"
           href={buildTimeRangeHref("/fuentes", snapshot.timeRange.id)}
           icon="database"
           label="Fuentes"

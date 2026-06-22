@@ -31,12 +31,6 @@ export default async function UsersPage({ searchParams }: PageProps) {
           value={numberFormatter.format(snapshot.kpis.activeUsers)}
         />
         <MetricPanel
-          detail="Promedio de reviews"
-          label="Calificacion"
-          trend={snapshot.trends.kpis.averageRating}
-          value={snapshot.kpis.averageRating.toFixed(1)}
-        />
-        <MetricPanel
           detail="Salud de integraciones"
           label="Fuentes"
           trend={snapshot.trends.kpis.integrationHealth}

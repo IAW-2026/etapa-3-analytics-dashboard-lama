@@ -20,7 +20,7 @@ export default async function SourcesPage({ searchParams }: PageProps) {
       <section className="page-hero compact">
         <p className="eyebrow">Integraciones</p>
         <h1>Fuentes</h1>
-        <p>Estado de APIs conectadas, errores y fallbacks usados para consolidar metricas.</p>
+        <p>Estado de APIs conectadas y errores detectados al consolidar metricas.</p>
       </section>
 
       <section className="sources-panel full">

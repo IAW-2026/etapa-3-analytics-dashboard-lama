@@ -159,7 +159,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 0 36px 0 14px;
+  padding: 0 14px;
   font-size: 0.86rem;
   font-weight: 800;
   white-space: nowrap;
@@ -171,19 +171,6 @@ h3 {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.time-range-control::after {
-  position: absolute;
-  right: 14px;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  content: "";
-  opacity: 0.72;
-  pointer-events: none;
-  transform: translateY(-2px) rotate(45deg);
 }
 
 .time-range-control select {
@@ -1817,7 +1804,6 @@ tr:last-child td {
   background: var(--accent);
 }
 
-.source-mock,
 .source-error {
   background: var(--ink);
 }
