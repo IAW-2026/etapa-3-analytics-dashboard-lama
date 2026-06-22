@@ -1,6 +1,6 @@
 import { fetchBuyerCustomers } from "./api/buyer";
 import { fetchPayments } from "./api/payments";
-import { fetchSellerOrders, fetchSellerProducts } from "./api/seller";
+import { fetchSellerOrders, fetchSellerProducts, fetchSellerVendors } from "./api/seller";
 import { fetchShippingShipments } from "./api/shipping";
 import { DEFAULT_TIME_RANGE_ID, resolveTimeRange } from "./time-range";
 import type {
@@ -13,7 +13,8 @@ import type {
   Product,
   Shipment,
   TimeRangeId,
-  TrendMetric
+  TrendMetric,
+  Vendor
 } from "./types";
 
 const monthFormatter = new Intl.DateTimeFormat("es-AR", { month: "short" });
@@ -183,6 +184,16 @@ function buildPreferenceCounts(
     .map(([label, value]) => ({ label, value }))
     .sort((first, second) => second.value - first.value)
     .slice(0, 5);
+}
+
+function buildSellerStatusCounts(vendors: Vendor[]) {
+  const activeSellers = vendors.filter((vendor) => vendor.activo).length;
+  const inactiveSellers = vendors.length - activeSellers;
+
+  return [
+    { label: "activo", value: activeSellers },
+    { label: "inactivo", value: inactiveSellers }
+  ].filter((item) => item.value > 0 || vendors.length === 0);
 }
 
 function sortRecentOrders(first: Order, second: Order) {
@@ -461,7 +472,8 @@ function buildTrends({
   payments,
   products,
   shipments,
-  timeRange
+  timeRange,
+  vendors
 }: {
   buyers: Buyer[];
   integrationHealth: number;
@@ -470,6 +482,7 @@ function buildTrends({
   products: Product[];
   shipments: Shipment[];
   timeRange: AnalyticsTimeRange;
+  vendors: Vendor[];
 }): AnalyticsSnapshot["trends"] {
   const currentBuyers = filterByRange(buyers, (buyer) => buyer.fecha_creacion, timeRange);
   const previousBuyers = filterByPreviousRange(buyers, (buyer) => buyer.fecha_creacion, timeRange);
@@ -487,6 +500,8 @@ function buildTrends({
   const previousProducts = filterByPreviousRange(products, (product) => product.fecha_creacion, timeRange);
   const currentActiveProducts = currentProducts.filter((product) => product.estado_publicacion === "activa");
   const previousActiveProducts = previousProducts.filter((product) => product.estado_publicacion === "activa");
+  const activeSellers = vendors.filter((vendor) => vendor.activo).length;
+  const inactiveSellers = vendors.length - activeSellers;
   const shipmentStatuses = Array.from(new Set(shipments.map((shipment) => shipment.estado)));
   const shipmentsByStatus = Object.fromEntries(
     shipmentStatuses.map((status) => [
@@ -501,6 +516,7 @@ function buildTrends({
 
   return {
     kpis: {
+      activeSellers: buildTrend(activeSellers, 0),
       activeProducts: buildTrend(currentActiveProducts.length, previousActiveProducts.length),
       activeUsers: buildTrend(currentBuyers.length, previousBuyers.length),
       averageDeliveryTimeDays: buildTrend(
@@ -528,6 +544,7 @@ function buildTrends({
       ),
       createdOrders: buildTrend(currentOrders.length, previousOrders.length),
       integrationHealth: buildTrend(integrationHealth, integrationHealth, "neutral"),
+      inactiveSellers: buildTrend(inactiveSellers, 0, "lower"),
       pendingPayments: buildTrend(currentPendingPayments.length, previousPendingPayments.length, "lower"),
       pendingRevenue: buildTrend(
         sum(currentPendingPayments.map((payment) => payment.monto_total)),
@@ -580,19 +597,22 @@ function buildSystemFlow({
   orders,
   payments,
   products,
-  shipments
+  shipments,
+  vendors
 }: {
   buyers: Buyer[];
   orders: Order[];
   payments: Payment[];
   products: Product[];
   shipments: Shipment[];
+  vendors: Vendor[];
 }): AnalyticsSnapshot["systemFlow"] {
   const buyerIds = new Set(buyers.map((buyer) => buyer.clerk_user_id_comprador));
   const orderIds = new Set(orders.map((order) => order.orden_id));
   const buyerIdsWithOrders = new Set(orders.map((order) => order.comprador_id).filter((buyerId) => buyerIds.has(buyerId)));
   const sellerIdsWithOrders = new Set(orders.map((order) => order.vendedor_id));
   const activeProducts = products.filter((product) => product.estado_publicacion === "activa");
+  const activeVendors = vendors.filter((vendor) => vendor.activo);
   const approvedPayments = payments.filter((payment) => payment.estado === "aprobado");
   const rejectedPayments = payments.filter((payment) => payment.estado === "rechazado");
   const paymentOrderIds = new Set(payments.map((payment) => payment.orden_id).filter((orderId) => orderIds.has(orderId)));
@@ -629,6 +649,7 @@ function buildSystemFlow({
       conversionToNext: percent(paymentOrderIds.size, orders.length),
       conversionLabel: "ordenes con pago",
       metrics: [
+        { label: "Vendedores activos", value: activeVendors.length, format: "number" },
         { label: "Productos activos", value: activeProducts.length, format: "number" },
         { label: "Ordenes recibidas", value: orders.length, format: "number" }
       ]
@@ -773,9 +794,10 @@ function buildOperationalAlerts(orders: Order[], payments: Payment[], shipments:
 }
 
 export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TIME_RANGE_ID): Promise<AnalyticsSnapshot> {
-  const [sellerProducts, sellerOrders, buyerCustomers] = await Promise.all([
+  const [sellerProducts, sellerOrders, sellerVendors, buyerCustomers] = await Promise.all([
     fetchSellerProducts(),
     fetchSellerOrders(),
+    fetchSellerVendors(),
     fetchBuyerCustomers()
   ]);
   const [shippingShipments, paymentsResult] = await Promise.all([
@@ -784,6 +806,7 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
   ]);
   const products = sellerProducts.products;
   const orders = sellerOrders.orders;
+  const vendors = sellerVendors.vendors;
   const buyerPreferences = buyerCustomers.preferences;
   const shipments = shippingShipments.shipments;
   const payments = paymentsResult.payments;
@@ -807,6 +830,8 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
   const pendingPayments = filteredPayments.filter((payment) => payment.estado === "pendiente");
   const completedOrders = filteredOrders.filter(isCompletedOrder);
   const activeUsers = filteredBuyers.length;
+  const activeSellers = vendors.filter((vendor) => vendor.activo).length;
+  const inactiveSellers = vendors.length - activeSellers;
   const averageRating = 0;
   const orderStatusCounts = countBy(filteredOrders.map((order) => order.estado_general));
   const paymentStatusCounts = countBy(filteredPayments.map((payment) => payment.estado));
@@ -814,6 +839,7 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
   const dataSources = [
     sellerProducts.source,
     sellerOrders.source,
+    sellerVendors.source,
     buyerCustomers.source,
     {
       ...shippingShipments.source
@@ -829,7 +855,8 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
     payments,
     products,
     shipments,
-    timeRange
+    timeRange,
+    vendors
   });
 
   return {
@@ -848,7 +875,10 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
       averagePaymentProcessingHours: getAveragePaymentProcessingHours(filteredOrders, filteredPayments),
       pendingRevenue: sum(pendingPayments.map((payment) => payment.monto_total)),
       completionRate: percent(completedOrders.length, filteredOrders.length),
-      integrationHealth
+      integrationHealth,
+      activeSellers,
+      inactiveSellers,
+      totalSellers: vendors.length
     },
     trends,
     revenueByMonth: buildRevenueByMonth(filteredPayments),
@@ -862,6 +892,7 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
     ordersByStatus: Object.entries(orderStatusCounts).map(([label, value]) => ({ label, value })),
     paymentsByStatus: Object.entries(paymentStatusCounts).map(([label, value]) => ({ label, value })),
     shipmentsByStatus: Object.entries(shipmentStatusCounts).map(([label, value]) => ({ label, value })),
+    sellersByStatus: buildSellerStatusCounts(vendors),
     buyerPreferencesByCategory: buildPreferenceCounts(
       filteredBuyerPreferences,
       (preference) => preference.categorias_preferidas
@@ -878,7 +909,8 @@ export async function getAnalyticsSnapshot(timeRangeId: TimeRangeId = DEFAULT_TI
       orders: filteredOrders,
       payments: filteredPayments,
       products: filteredProducts,
-      shipments: filteredShipments
+      shipments: filteredShipments,
+      vendors
     }),
     orderFunnel: buildOrderFunnel(filteredOrders),
     operationalAlerts: buildOperationalAlerts(filteredOrders, filteredPayments, filteredShipments, filteredProducts),

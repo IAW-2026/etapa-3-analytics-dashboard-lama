@@ -72,7 +72,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           badge="Buyer"
           detail="Compradores registrados en Buyer"
           icon="users"
-          label="Usuarios activos"
+          label="Compradores"
           trend={snapshot.trends.kpis.activeUsers}
           value={numberFormatter.format(snapshot.kpis.activeUsers)}
         />

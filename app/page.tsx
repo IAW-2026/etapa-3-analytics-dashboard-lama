@@ -90,12 +90,11 @@ export default async function Home({ searchParams }: PageProps) {
           value={numberFormatter.format(snapshot.shipmentsByStatus.reduce((total, item) => total + item.value, 0))}
         />
         <ModuleCard
-          detail="Compradores y preferencias"
+          detail="Compradores y vendedores"
           href={buildTimeRangeHref("/usuarios", snapshot.timeRange.id)}
           icon="users"
           label="Usuarios"
-          trend={snapshot.trends.kpis.activeUsers}
-          value={numberFormatter.format(snapshot.kpis.activeUsers)}
+          value={numberFormatter.format(snapshot.kpis.activeUsers + snapshot.kpis.activeSellers)}
         />
         <ModuleCard
           detail="APIs conectadas"

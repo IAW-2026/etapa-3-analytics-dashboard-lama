@@ -23,6 +23,14 @@ function buildLocalRecommendations(snapshot: AnalyticsSnapshot, projection: AiIn
   const rejectedPayments = snapshot.paymentsByStatus.find((item) => item.label === "rechazado")?.value ?? 0;
   const pendingShipments = snapshot.shipmentsByStatus.find((item) => item.label === "pending")?.value ?? 0;
 
+  if (snapshot.kpis.inactiveSellers > 0) {
+    recommendations.push({
+      title: "Revisar vendedores inactivos",
+      detail: `${snapshot.kpis.inactiveSellers} vendedores estan inhabilitados en Seller. Puede afectar oferta disponible y cobertura de demanda.`,
+      tone: "warning"
+    });
+  }
+
   if (pendingPayments > 0) {
     recommendations.push({
       title: "Priorizar pagos pendientes",
@@ -106,6 +114,7 @@ ${JSON.stringify(
     recommendations: localInsights.recommendations,
     paymentsByStatus: snapshot.paymentsByStatus,
     shipmentsByStatus: snapshot.shipmentsByStatus,
+    sellersByStatus: snapshot.sellersByStatus,
     topProducts: snapshot.topProducts.slice(0, 3),
     buyerPreferencesBySize: snapshot.buyerPreferencesBySize.slice(0, 3),
     buyerPreferencesByCategory: snapshot.buyerPreferencesByCategory.slice(0, 3)

@@ -1,6 +1,6 @@
 import { getAnalyticsSnapshot } from "@/lib/analytics";
 import { getTimeRangeIdFromSearchParams, type TimeRangeSearchParams } from "@/lib/time-range";
-import { AppChrome, MetricPanel, numberFormatter, TemporalChart } from "../ui";
+import { AppChrome, HorizontalBars, MetricPanel, numberFormatter, TemporalChart } from "../ui";
 
 type PageProps = {
   searchParams?: Promise<TimeRangeSearchParams>;
@@ -18,17 +18,29 @@ export default async function UsersPage({ searchParams }: PageProps) {
       timeRangeId={snapshot.timeRange.id}
     >
       <section className="page-hero compact">
-        <p className="eyebrow">Buyer</p>
+        <p className="eyebrow">Buyer / Seller</p>
         <h1>Usuarios</h1>
-        <p>Compradores activos y preferencias disponibles desde Buyer.</p>
+        <p>Compradores disponibles desde Buyer y vendedores activos e inactivos desde Seller.</p>
       </section>
 
       <section className="detail-grid">
         <MetricPanel
           detail="Compradores registrados"
-          label="Activos"
+          label="Compradores"
           trend={snapshot.trends.kpis.activeUsers}
           value={numberFormatter.format(snapshot.kpis.activeUsers)}
+        />
+        <MetricPanel
+          detail="Habilitados en Seller"
+          label="Vendedores activos"
+          trend={snapshot.trends.kpis.activeSellers}
+          value={numberFormatter.format(snapshot.kpis.activeSellers)}
+        />
+        <MetricPanel
+          detail="Inhabilitados en Seller"
+          label="Vendedores inactivos"
+          trend={snapshot.trends.kpis.inactiveSellers}
+          value={numberFormatter.format(snapshot.kpis.inactiveSellers)}
         />
         <MetricPanel
           detail="Salud de integraciones"
@@ -68,6 +80,16 @@ export default async function UsersPage({ searchParams }: PageProps) {
             valueKey="orders"
             valueLabel="Ordenes creadas"
           />
+        </article>
+
+        <article className="panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Seller</p>
+              <h2>Estado de vendedores</h2>
+            </div>
+          </div>
+          <HorizontalBars data={snapshot.sellersByStatus} valueLabel="vendedores" />
         </article>
       </section>
     </AppChrome>

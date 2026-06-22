@@ -85,6 +85,7 @@ function buildSnapshotContext(snapshot: AnalyticsSnapshot) {
     ordersByStatus: snapshot.ordersByStatus,
     paymentsByStatus: snapshot.paymentsByStatus,
     shipmentsByStatus: snapshot.shipmentsByStatus,
+    sellersByStatus: snapshot.sellersByStatus,
     salesByDay: snapshot.salesByDay,
     salesByHour: snapshot.salesByHour,
     topProducts: snapshot.topProducts,
@@ -125,6 +126,15 @@ function buildLocalAnswer(question: string, snapshot: AnalyticsSnapshot) {
     const pending = snapshot.paymentsByStatus.find((item) => item.label === "pendiente")?.value ?? 0;
 
     return `Hay ${approved} pagos aprobados y ${pending} pagos pendientes. Los ingresos pendientes suman $${snapshot.kpis.pendingRevenue}.`;
+  }
+
+  if (normalizedQuestion.includes("vendedor")) {
+    const topSeller = snapshot.topSellers[0];
+    const topSellerText = topSeller
+      ? ` El vendedor con mas ingresos es ${topSeller.sellerId}, con ${topSeller.sales} ventas y $${topSeller.revenue}.`
+      : "";
+
+    return `Hay ${snapshot.kpis.activeSellers} vendedores activos y ${snapshot.kpis.inactiveSellers} inactivos en Seller.${topSellerText}`;
   }
 
   return `En el periodo seleccionado hay $${snapshot.kpis.revenue} de ingresos aprobados, ${snapshot.kpis.totalTransactions} transacciones aprobadas y una tasa de finalizacion de ${snapshot.kpis.completionRate}%.`;

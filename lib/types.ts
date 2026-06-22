@@ -31,6 +31,15 @@ export type BuyerPreference = {
   vendedores_preferidos: string[];
 };
 
+export type Vendor = {
+  clerk_user_id: string;
+  nombre_vendedor: string;
+  dni: string;
+  email: string;
+  telefono?: string;
+  activo: boolean;
+};
+
 export type Product = {
   producto_id: string;
   vendedor_id: string;
@@ -120,6 +129,7 @@ export type AnalyticsTimeRange = {
 };
 
 export type KpiTrendKey =
+  | "activeSellers"
   | "activeProducts"
   | "activeUsers"
   | "averageDeliveryTimeDays"
@@ -130,6 +140,7 @@ export type KpiTrendKey =
   | "completionRate"
   | "createdOrders"
   | "integrationHealth"
+  | "inactiveSellers"
   | "pendingPayments"
   | "pendingRevenue"
   | "revenue"
@@ -152,6 +163,9 @@ export type AnalyticsSnapshot = {
     pendingRevenue: number;
     completionRate: number;
     integrationHealth: number;
+    activeSellers: number;
+    inactiveSellers: number;
+    totalSellers: number;
   };
   trends: {
     kpis: Record<KpiTrendKey, TrendMetric>;
@@ -172,6 +186,7 @@ export type AnalyticsSnapshot = {
   ordersByStatus: Array<{ label: string; value: number }>;
   paymentsByStatus: Array<{ label: string; value: number }>;
   shipmentsByStatus: Array<{ label: string; value: number }>;
+  sellersByStatus: Array<{ label: string; value: number }>;
   buyerPreferencesByCategory: Array<{ label: string; value: number }>;
   buyerPreferencesBySize: Array<{ label: string; value: number }>;
   buyerPreferencesBySeller: Array<{ label: string; value: number }>;

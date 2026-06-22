@@ -1,4 +1,4 @@
-import type { Order, Product } from "@/lib/types";
+import type { Order, Product, Vendor } from "@/lib/types";
 
 type SellerProductsResponse = {
   items?: unknown;
@@ -6,6 +6,15 @@ type SellerProductsResponse = {
 
 type SellerOrdersResponse = {
   items?: unknown;
+};
+
+type SellerVendorsResponse = {
+  items?: unknown;
+  vendedores?: unknown;
+  data?: unknown;
+  total?: unknown;
+  page?: unknown;
+  pageSize?: unknown;
 };
 
 export type DataSourceStatus = {
@@ -24,10 +33,40 @@ export type OrdersResult = {
   source: DataSourceStatus;
 };
 
+export type VendorsResult = {
+  vendors: Vendor[];
+  totalVendors: number;
+  page: number;
+  pageSize: number;
+  source: DataSourceStatus;
+};
+
 function getSellerUrl(path: string) {
   const baseUrl = process.env.SELLER_API_BASE_URL ?? "https://proyecto-c-seller-lama.vercel.app";
 
   return `${baseUrl.replace(/\/$/, "")}${path}`;
+}
+
+function getSellerVendorsPath() {
+  return process.env.SELLER_VENDORS_PATH ?? "/api/vendedores";
+}
+
+function getSellerVendorsUrl() {
+  const path = getSellerVendorsPath();
+  const url = new URL(getSellerUrl(path.startsWith("/") ? path : `/${path}`));
+  const optionalParams = {
+    search: process.env.SELLER_VENDORS_SEARCH,
+    page: process.env.SELLER_VENDORS_PAGE,
+    pageSize: process.env.SELLER_VENDORS_PAGE_SIZE
+  };
+
+  Object.entries(optionalParams).forEach(([key, value]) => {
+    if (value?.trim()) {
+      url.searchParams.set(key, value);
+    }
+  });
+
+  return url.toString();
 }
 
 function getApiHeaders() {
@@ -64,6 +103,30 @@ function asString(value: unknown, fallback = "") {
 
 function asNumber(value: unknown, fallback = 0) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function asBoolean(value: unknown, fallback = false) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (["1", "activo", "active", "habilitado", "true", "si"].includes(normalizedValue)) {
+      return true;
+    }
+
+    if (["0", "inactivo", "inactive", "inhabilitado", "false", "no"].includes(normalizedValue)) {
+      return false;
+    }
+  }
+
+  return fallback;
 }
 
 function asOptionalNumber(...values: unknown[]) {
@@ -115,6 +178,35 @@ function normalizeProduct(value: unknown): Product | null {
     genero: asString(product.genero, "mujer") as Product["genero"],
     estado_publicacion: asString(product.estado_publicacion, "activa") as Product["estado_publicacion"],
     fecha_creacion: asString(product.fecha_creacion, new Date().toISOString())
+  };
+}
+
+function normalizeVendor(value: unknown): Vendor | null {
+  const vendor = asRecord(value);
+
+  if (!vendor) {
+    return null;
+  }
+
+  const clerkUserId = asString(
+    vendor.clerk_user_id,
+    asString(vendor.clerkUserId, asString(vendor.id))
+  );
+
+  if (!clerkUserId) {
+    return null;
+  }
+
+  return {
+    clerk_user_id: clerkUserId,
+    nombre_vendedor: asString(
+      vendor.nombre_vendedor,
+      asString(vendor.nombreVendedor, "Vendedor sin nombre")
+    ),
+    dni: asString(vendor.dni, asString(vendor.DNI)),
+    email: asString(vendor.email),
+    telefono: asString(vendor.telefono) || undefined,
+    activo: asBoolean(vendor.activo)
   };
 }
 
@@ -196,6 +288,56 @@ function normalizeOrdersResponse(payload: unknown) {
   const items = Array.isArray(rawItems) ? rawItems : [];
 
   return items.map(normalizeOrder).filter((order): order is Order => Boolean(order));
+}
+
+function getVendorsItems(payload: unknown) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  const response = asRecord(payload) as SellerVendorsResponse | null;
+
+  if (!response) {
+    return [];
+  }
+
+  if (Array.isArray(response.items)) {
+    return response.items;
+  }
+
+  if (Array.isArray(response.vendedores)) {
+    return response.vendedores;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  const data = asRecord(response.data);
+
+  if (data && Array.isArray(data.items)) {
+    return data.items;
+  }
+
+  if (data && Array.isArray(data.vendedores)) {
+    return data.vendedores;
+  }
+
+  return [];
+}
+
+function normalizeVendorsResponse(payload: unknown) {
+  const response = asRecord(payload) as SellerVendorsResponse | null;
+  const data = asRecord(response?.data);
+  const items = getVendorsItems(payload);
+  const vendors = items.map(normalizeVendor).filter((vendor): vendor is Vendor => Boolean(vendor));
+
+  return {
+    vendors,
+    total: asOptionalNumber(response?.total, data?.total) ?? vendors.length,
+    page: asOptionalNumber(response?.page, data?.page) ?? 1,
+    pageSize: asOptionalNumber(response?.pageSize, data?.pageSize) ?? items.length
+  };
 }
 
 export async function fetchSellerProducts(): Promise<ProductsResult> {
@@ -285,6 +427,61 @@ export async function fetchSellerOrders(): Promise<OrdersResult> {
         name: "Seller Ordenes",
         status: "error",
         detail: "No se pudo conectar con ordenes de Seller."
+      }
+    };
+  }
+}
+
+export async function fetchSellerVendors(): Promise<VendorsResult> {
+  const url = getSellerVendorsUrl();
+
+  try {
+    const response = await fetch(url, {
+      headers: getApiHeaders(),
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      return {
+        vendors: [],
+        totalVendors: 0,
+        page: 1,
+        pageSize: 0,
+        source: {
+          name: "Seller Vendedores",
+          status: "error",
+          detail: `No se pudieron traer vendedores reales (${response.status}).`
+        }
+      };
+    }
+
+    const payload = await response.json();
+    const vendorResponse = normalizeVendorsResponse(payload);
+
+    return {
+      vendors: vendorResponse.vendors,
+      totalVendors: vendorResponse.total,
+      page: vendorResponse.page,
+      pageSize: vendorResponse.pageSize,
+      source: {
+        name: "Seller Vendedores",
+        status: "connected",
+        detail:
+          vendorResponse.vendors.length > 0
+            ? `Vendedores reales obtenidos desde ${url}. Total: ${vendorResponse.total}.`
+            : `Seller respondio sin vendedores desde ${url}.`
+      }
+    };
+  } catch {
+    return {
+      vendors: [],
+      totalVendors: 0,
+      page: 1,
+      pageSize: 0,
+      source: {
+        name: "Seller Vendedores",
+        status: "error",
+        detail: "No se pudo conectar con vendedores de Seller."
       }
     };
   }
