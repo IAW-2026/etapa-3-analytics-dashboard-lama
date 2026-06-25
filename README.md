@@ -1,9 +1,18 @@
-# analytics-dashboard
+# Analytics Dashboard
 
-Aplicación **Analytics Dashboard** del [Proyecto IAW 2026](https://iaw-2026.github.io/proyecto/) — comisión `<!-- completar -->`.
+Aplicacion **Analytics Dashboard** para el sistema LAMA.
 
-Herramienta de reportes consolidados (Etapa 3): métricas del sistema completo consultando las APIs de cada webapp individual.
+Es una webapp de lectura y analisis que presenta metricas y reportes sobre el sistema completo. No es un CRUD: su objetivo es consolidar datos de las distintas webapps de LAMA y mostrarlos de forma clara para entender el estado operativo del marketplace.
 
----
+La app se conecta a las APIs de Buyer, Seller, Payments y Shipping para obtener datos en tiempo real sobre ventas, ordenes, pagos, envios, productos y vendedores. Luego procesa esta informacion para generar indicadores clave del negocio, visualizaciones y reportes exportables. Ademas, incluye un modulo de Insights IA que utiliza modelos de lenguaje para generar resmenes automaticos y recomendaciones basadas en los datos.
 
-Enunciado completo: <https://iaw-2026.github.io/proyecto/>
+Link a la webapp: https://etapa-3-analytics-dashboard-lama.vercel.app/
+
+## Webapps consultadas
+
+- Seller App: https://proyecto-c-seller-lama.vercel.app
+- Buyer App: https://proyecto-c-buyer2-lama.vercel.app
+- Shipping App: https://proyecto-c-shipping-lama.vercel.app
+- Payments App: https://proyecto-c-payments-lama.vercel.app
+
+
