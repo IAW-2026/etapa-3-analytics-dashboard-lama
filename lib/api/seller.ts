@@ -70,7 +70,7 @@ function getSellerVendorsUrl() {
 }
 
 function getApiHeaders() {
-  const apiKey = process.env.SELLER_API_KEY ?? process.env.ANALYTICS_API_KEY;
+  const apiKey = process.env.ANALYTICS_API_KEY;
   const headerName = process.env.SELLER_API_KEY_HEADER ?? "x-api-key";
   const serviceName = process.env.ANALYTICS_SERVICE_NAME ?? "analytics";
   const serviceHeaderName = process.env.ANALYTICS_SERVICE_NAME_HEADER ?? "x-service-name";
